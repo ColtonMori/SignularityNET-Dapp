@@ -7,6 +7,7 @@ import HeaderActions from "./HeaderActions";
 import Title from "./Title";
 import MobileHeader from "./MobileHeader";
 import UpdateNotificationBar from "../../common/UpdateNotificationBar";
+import UpdateNotificationBar from "../UpdateNotificationBar";
 import { NavData } from "../../../utility/constants/Header";
 
 const Header = ({ isLoggedIn, showNotification, onCloseClick }) => {
