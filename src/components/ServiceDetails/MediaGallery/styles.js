@@ -1,14 +1,17 @@
 export const useStyles = theme => ({
   mediaGalleryContainer: {
     boxShadow: "0 1px 1px 0 rgba(0,0,0,0.07), 0 2px 1px -1px rgba(0,0,0,0.07), 0 1px 3px 0 rgba(0,0,0,0.1)",
-    margin: "25px 0 70px",
+    margin: "25px 0 0",
     borderRadius: 4,
     backgroundColor: theme.palette.text.white,
     "& iframe": { width: "100%" },
   },
   marketplace_media_gallery: {
     padding: "10px 30px 31px",
-    "& .image-gallery-thumbnail": { border: "3px solid transparent" },
+    "& .image-gallery-thumbnail": {
+      border: "3px solid transparent",
+      cursor: "pointer",
+    },
     "& .image-gallery-thumbnail.active, .image-gallery-thumbnail:hover, .image-gallery-thumbnail:focus": {
       border: "3px solid transparent",
     },
@@ -137,7 +140,10 @@ export const useStyles = theme => ({
       },
     },
   },
-  videoMainContainer: { position: "relative" },
+  videoMainContainer: {
+    position: "relative",
+    cursor: "pointer",
+  },
   playVideoIcon: {
     backgroundColor: "#4086FF",
     boxShadow: "0 0 10px 0 rgba(0,0,0,0.4)",
@@ -180,6 +186,7 @@ export const useStyles = theme => ({
     "& img": {
       width: "100%",
       height: "100%",
+      objectFit: "contain",
     },
     "@media(max-width: 1050px)": {
       width: "90%",
@@ -236,6 +243,7 @@ export const useStyles = theme => ({
   },
   lightBoxDescription: {
     paddingTop: 15,
-    display: "inline-block",
+    // display: "inline-block",
+    display: "none",
   },
 });

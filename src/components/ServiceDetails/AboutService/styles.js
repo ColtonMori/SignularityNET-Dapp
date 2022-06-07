@@ -1,6 +1,6 @@
 export const useStyles = theme => ({
   aboutContainer: {
-    padding: "15px 0 100px",
+    padding: "15px 0 64px",
     borderTopWidth: 1,
     borderTopStyle: "solid",
     borderTopColor: theme.palette.text.verticalTabLeftBorder,
@@ -109,7 +109,7 @@ export const useStyles = theme => ({
     margin: "30px 0 0",
     display: "flex",
     alignItems: "center",
-    "& span": { color: theme.palette.text.primary },
+    "& svg": { color: theme.palette.text.primary },
     "& a": {
       marginLeft: 7,
       color: theme.palette.text.primary,
@@ -251,4 +251,47 @@ export const useStyles = theme => ({
       display: "inline-block",
     },
   },
+  promoContainer: {
+    width: 631,
+    padding: "40px 0 37px",
+    borderRadius: 6,
+    display: "flex",
+    alignItems: "flex-start",
+    "& div": {
+      marginLeft: 32,
+      "& > span": {
+        color: "#222",
+        fontSize: 24,
+        fontWeight: 600,
+        lineHeight: "32px",
+      },
+      "& p": {
+        margin: "16px 0 32px",
+        color: "#666",
+        fontWeight: 300,
+        lineHeight: "24px",
+      },
+      "& a": {
+        padding: "7px 32px",
+        border: "1px solid #4086ff",
+        borderRadius: 4,
+        display: "inline-block",
+        background: "transparent",
+        color: "#4086ff",
+        cursor: "pointer",
+        fontFamily: "Muli",
+        fontSize: 14,
+        fontWeight: 600,
+        letterSpacing: 1.25,
+        lineHeight: "16px",
+        textDecoration: "none",
+        textTransform: "uppercase",
+      },
+    },
+  },
+  showInResponsive: {
+    display: "none",
+    "@media(max-width:768px)": { display: "block" },
+  },
+  showOnNrmalResolution: { "@media(max-width:768px)": { display: "none" } },
 });

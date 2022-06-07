@@ -10,6 +10,7 @@ const withInAppWrapper = InputComponent => {
     const classes = useStyles();
     const [showUpdateNotification, setShowUpdateNotificationBar] = useLocalStorage(
       localStorageKeys.SHOW_PHASE2_NOTIFICATION,
+      false,
       true
     );
 

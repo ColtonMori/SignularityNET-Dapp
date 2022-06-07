@@ -28,7 +28,7 @@ const payTypes = {
 const connectMMinfo = {
   type: alertTypes.WARNING,
   message: `Please install Metamask and use your Metamask wallet to connect to SingularityNet. 
-Click below to install and learn more about how to use Metamask and your AGI credits with SinguarlityNet AI Marketplace.`,
+Click below to install and learn more about how to use Metamask and your AGIX credits with SinguarlityNet AI Marketplace.`,
 };
 
 class MetamaskFlow extends Component {
@@ -70,12 +70,12 @@ class MetamaskFlow extends Component {
     {
       title: "Escrow Balance",
       value: this.state.mpeBal,
-      unit: "AGI",
+      unit: "AGIX",
     },
     {
       title: "Channel Balance",
       value: this.state.channelBalance,
-      unit: "AGI",
+      unit: "AGIX",
     },
   ];
 
@@ -99,7 +99,14 @@ class MetamaskFlow extends Component {
   };
 
   handleConnectMM = async () => {
-    const { startMMconnectLoader, stopLoader, registerWallet, walletList, updateWallet } = this.props;
+    const {
+      startMMconnectLoader,
+      stopLoader,
+      registerWallet,
+      walletList,
+      updateWallet,
+      fetchAvailableUserWallets,
+    } = this.props;
     this.setState({ alert: {} });
     try {
       startMMconnectLoader();
@@ -107,10 +114,13 @@ class MetamaskFlow extends Component {
       const mpeBal = await sdk.account.escrowBalance();
       await this.paymentChannelManagement.updateChannelInfo();
       const address = await sdk.account.getAddress();
-      const addressAlreadyRegistered = walletList.some(wallet => wallet.address.toLowerCase() === address);
+      const availableUserWallets = await fetchAvailableUserWallets();
+      const addressAlreadyRegistered = availableUserWallets.some(wallet => wallet.address.toLowerCase() === address);
+
       if (!addressAlreadyRegistered) {
         await registerWallet(address, walletTypes.METAMASK);
       }
+
       updateWallet({ type: walletTypes.METAMASK, address });
       this.PaymentInfoCardData.map(el => {
         if (el.title === "Escrow Balance") {
@@ -159,7 +169,15 @@ class MetamaskFlow extends Component {
 
     let { noOfServiceCalls, selectedPayType } = this.state;
     if (selectedPayType === payTypes.CHANNEL_BALANCE) {
-      this.props.handleContinue();
+      try {
+        const isChannelNearToExpiry = await this.paymentChannelManagement.isChannelNearToExpiry();
+        if (isChannelNearToExpiry) {
+          await this.paymentChannelManagement.extendChannel();
+        }
+        this.props.handleContinue();
+      } catch (e) {
+        this.setState({ alert: { type: alertTypes.ERROR, message: e.message } });
+      }
       this.props.stopLoader();
       return;
     }
@@ -174,7 +192,7 @@ class MetamaskFlow extends Component {
           mpeBal,
           alert: {
             type: alertTypes.ERROR,
-            message: `Insufficient MPE balance. Please deposit some AGI tokens to your escrow account`,
+            message: `Insufficient MPE balance. Please deposit some AGIX tokens to your escrow account`,
           },
         });
         return;
@@ -197,7 +215,10 @@ class MetamaskFlow extends Component {
     return this.PaymentInfoCardData.find(el => el.title === "Channel Balance").value;
   };
 
-  shouldContinueBeEnabled = () => this.state.mpeBal > 0 && this.props.isServiceAvailable;
+  shouldContinueBeEnabled = () => {
+    const { mpeBal, totalPrice, channelBalance } = this.state;
+    return this.props.isServiceAvailable && (mpeBal >= totalPrice || channelBalance >= totalPrice);
+  };
 
   shouldDepositToEscrowBeHighlighted = () => this.state.mpeBal <= 0;
 
@@ -251,7 +272,7 @@ class MetamaskFlow extends Component {
             <span className={classes.channelSelectionTitle}>Recommended</span>
             <ChannelSelectionBox
               title="Channel Balance"
-              description={`You have ${this.parseChannelBalFromPaymentCard()} AGI in you channel. This can be used for running demos across all the services from this vendor.`}
+              description={`You have ${this.parseChannelBalFromPaymentCard()} AGIX in you channel. This can be used for running demos across all the services from this vendor.`}
               checked={selectedPayType === payTypes.CHANNEL_BALANCE}
               value={payTypes.CHANNEL_BALANCE}
               onClick={() => this.handlePayTypeChange(payTypes.CHANNEL_BALANCE)}
@@ -270,7 +291,7 @@ class MetamaskFlow extends Component {
                 noOfServiceCalls,
                 onChange: this.handleNoOfCallsChange,
                 totalPrice,
-                unit: "AGI",
+                unit: "AGIX",
               }}
               disabled={disabledPayTypes.includes(payTypes.MULTIPLE_CALLS)}
             />
@@ -283,7 +304,7 @@ class MetamaskFlow extends Component {
               inputProps={{
                 noOfServiceCalls: 1,
                 totalPrice: cogsToAgi(this.props.pricing.price_in_cogs),
-                unit: "AGI",
+                unit: "AGIX",
                 disabled: true,
               }}
               disabled={disabledPayTypes.includes(payTypes.SINGLE_CALL)}
@@ -333,6 +354,7 @@ const mapDispatchToProps = dispatch => ({
   startChannelSetupLoader: () => dispatch(loaderActions.startAppLoader(LoaderContent.SETUP_CHANNEL_FOR_SERV_EXEC)),
   updateWallet: ({ type, address }) => dispatch(userActions.updateWallet({ type, address })),
   registerWallet: (address, type) => dispatch(userActions.registerWallet(address, type)),
+  fetchAvailableUserWallets: () => dispatch(userActions.fetchAvailableUserWallets()),
   stopLoader: () => dispatch(loaderActions.stopAppLoader),
 });
 

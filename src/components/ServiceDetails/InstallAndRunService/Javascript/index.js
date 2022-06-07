@@ -4,17 +4,10 @@ import { withStyles } from "@material-ui/styles";
 
 import { useStyles } from "../styles";
 import CodeSnippet from "../../../common/CodeSnippet";
-import StyledButton from "../../../common/StyledButton";
 
 const Javascript = ({ classes, description }) => {
   return (
     <section className={classes.languageTabSection}>
-      <div className={classes.descriptionBtnsContainer}>
-        <p>{description}</p>
-        <div className={classes.btnContainer}>
-          <StyledButton type="blue" btnText="Download Integration files" />
-        </div>
-      </div>
       <div className={classes.setingUpFilesContainer}>
         <h3>Setting Up Files</h3>
         <div>

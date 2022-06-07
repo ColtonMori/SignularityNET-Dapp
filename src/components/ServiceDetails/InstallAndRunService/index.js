@@ -11,6 +11,7 @@ import Web3 from "web3";
 import StyledTabs from "../StyledTabs";
 import Python from "./Python";
 import Javascript from "./Javascript";
+import Nodejs from "./Nodejs";
 import ProjectDetails from "../ProjectDetails";
 import { useStyles } from "./styles";
 import { serviceActions } from "../../../Redux/actionCreators";
@@ -64,16 +65,27 @@ class InstallAndRunService extends Component {
         name: "Python",
         activeIndex: 0,
         component: (
-          <Python description="Download the Python SDK to help you integrate this AI service with your application. Once you setup your configuration, use the token generator below to test the servcie with a number of free calls." />
+          <Python
+            description="Download the Python SDK to help you integrate this AI service with your application. Once you setup your configuration, use the token generator below to test the servcie with a number of free calls."
+            orgId={service.org_id}
+            serviceId={service.service_id}
+          />
         ),
       },
       {
-        name: "Javascript",
+        name: "Nodejs",
         activeIndex: 1,
         component: (
-          <Javascript description="Download the Javascript SDK to help you integrate this AI service with your application. Once you setup your configuration, use the token generator below to test the servcie with a number of free calls." />
+          <Nodejs description="Download the Nodejs SDK to help you integrate this AI service with your application. Once you setup your configuration, use the token generator below to test the servcie with a number of free calls." />
         ),
       },
+      // {
+      //   name: "Javascript",
+      //   activeIndex: 2,
+      //   component: (
+      //     <Javascript description="Download the Javascript SDK to help you integrate this AI service with your application. Once you setup your configuration, use the token generator below to test the servcie with a number of free calls." />
+      //   ),
+      // },
     ];
     return (
       <Grid container spacing={24} className={classes.installAndRunContainer}>
@@ -87,45 +99,47 @@ class InstallAndRunService extends Component {
           <div className={classes.integrationSetupContainer}>
             <h2>Free Call Authentication Token</h2>
             <div className={classes.overViewContainer}>
-              <Typography className={classes.intSetupDesc}>
-                Generate the free call token to use in your SDK. The address used to generate this token should be the
-                same as the identity specified in your SDK configuation. This will allow you to invoke the service from
-                your SDK on a trial basis
-              </Typography>
-              <div className={classes.textfieldContainer}>
-                <div>
-                  <InfoIcon className={classes.infoIcon} />
-                  <TextField
-                    id="outlined-user-name"
-                    label="Public Address"
-                    className={classes.textField}
-                    margin="normal"
-                    variant="outlined"
-                    value={this.state.publickey}
-                    onChange={this.handlePublicKey}
-                  />
-                  <Typography className={classes.publicAddDesc}>
-                    Ethereum address used in your SDK. This is the public address corresponding to the private key you
-                    use in the SDK
-                  </Typography>
+              <div className={classes.freecallContainer}>
+                <Typography className={classes.intSetupDesc}>
+                  Generate the free call token to use in your SDK. The address used to generate this token should be the
+                  same as the identity specified in your SDK configuation. This will allow you to invoke the service
+                  from your SDK on a trial basis
+                </Typography>
+                <div className={classes.textfieldContainer}>
+                  <div>
+                    <InfoIcon className={classes.infoIcon} />
+                    <TextField
+                      id="outlined-user-name"
+                      label="Public Address"
+                      className={classes.textField}
+                      margin="normal"
+                      variant="outlined"
+                      value={this.state.publickey}
+                      onChange={this.handlePublicKey}
+                    />
+                    <Typography className={classes.publicAddDesc}>
+                      Ethereum address used in your SDK. This is the public address corresponding to the private key you
+                      use in the SDK
+                    </Typography>
+                  </div>
+                  {!downloadTokenURL && (
+                    <Button
+                      type="submit"
+                      className={classes.DownloadTokenBtn}
+                      color="primary"
+                      onClick={this.generateToken}
+                    >
+                      Generate Token
+                    </Button>
+                  )}
+                  {downloadTokenURL && (
+                    <a href={downloadTokenURL} download={downloadTokenFileName}>
+                      Download Token
+                    </a>
+                  )}
                 </div>
-                {!downloadTokenURL && (
-                  <Button
-                    type="submit"
-                    className={classes.DownloadTokenBtn}
-                    color="primary"
-                    onClick={this.generateToken}
-                  >
-                    Generate Token
-                  </Button>
-                )}
-                {downloadTokenURL && (
-                  <a href={downloadTokenURL} download={downloadTokenFileName}>
-                    Download Token
-                  </a>
-                )}
+                <AlertBox type={alert.type} message={alert.message} />
               </div>
-              <AlertBox type={alert.type} message={alert.message} />
             </div>
           </div>
         </Grid>
