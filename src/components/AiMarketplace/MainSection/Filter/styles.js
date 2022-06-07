@@ -2,10 +2,12 @@ import { makeStyles, createStyles } from "@material-ui/styles";
 export const useStyles = theme =>
   createStyles({
     filterContainer: {
-      boxShadow: "0 1px 1px 0 rgba(0,0,0,0.07), 0 2px 1px -1px rgba(0,0,0,0.07), 0 1px 3px 0 rgba(0,0,0,0.1)",
+      maxWidth: 1280,
+      margin: "0 auto",
+      "@media(max-width: 1280px)": { padding: "0 10px" },
     },
     filterResetBtnContainer: {
-      padding: "11px 22px",
+      padding: "12px 22px",
       display: "flex",
       justifyContent: "space-between",
       borderRadius: "4px 4px 0 0",

@@ -1,8 +1,33 @@
 export const useStyles = theme => ({
   serviceDetailContainer: {
     width: "auto",
-    padding: "100px 60px 0",
-    backgroundColor: theme.palette.text.offWhiteColor,
+    color: theme.palette.text.primary,
+    "& > div": {
+      paddingLeft: 60,
+      paddingRight: 60,
+      "@media(max-width:1280px)": {
+        paddingLeft: 10,
+        paddingRight: 10,
+      },
+      "&:last-of-type": {
+        "@media(max-width:768px)": { paddingRight: 0, paddingLeft: 0 },
+      },
+    },
+  },
+  notificationBar: {
+    width: "100%",
+    padding: "0 !important",
+    position: "fixed",
+    right: 0,
+    left: 0,
+    zIndex: 15,
+  },
+  TopSection: {
+    width: "100%",
+    marginTop: 75,
+    display: "flex",
+    "@media(max-width:768px)": { flexDirection: "column" },
+    "@media(max-width:480px)": { marginTop: 16 },
   },
   computerVisionContainer: { display: "flex" },
   computerVisionContent: {

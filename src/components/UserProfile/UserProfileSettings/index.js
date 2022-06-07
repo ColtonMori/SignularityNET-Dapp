@@ -5,6 +5,7 @@ import TextField from "@material-ui/core/TextField";
 import FormControlLabel from "@material-ui/core/FormControlLabel";
 import Checkbox from "@material-ui/core/Checkbox";
 import { connect } from "react-redux";
+import { withRouter } from "react-router-dom";
 
 import StyledButton from "../../common/StyledButton";
 import { useStyles } from "./styles";
@@ -84,7 +85,7 @@ class UserProfileSettings extends Component {
     const { alertMessage, alertType, emailAlerts, showConfirmDelete, confirmDeleteError } = this.state;
     return (
       <Grid container spacing={24} className={classes.settingMainContainer}>
-        <Grid item xs={12} sm={12} md={8} lg={8} className={classes.settingsContainer}>
+        <Grid item xs={12} sm={12} md={7} lg={7} className={classes.settingsContainer}>
           <h3>Settings</h3>
           <div className={classes.settingsContent}>
             <div>
@@ -168,7 +169,6 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
   deleteUserAccount: ({ history, route }) => dispatch(userActions.deleteUserAccount({ history, route })),
-  fetchUserProfile: () => dispatch(userActions.fetchUserProfile()),
   updateUserProfile: updatedUserData => dispatch(userActions.updateUserProfile(updatedUserData)),
   stopLoader: () => dispatch(loaderActions.stopAppLoader),
 });
@@ -176,4 +176,4 @@ const mapDispatchToProps = dispatch => ({
 export default connect(
   mapStateToProps,
   mapDispatchToProps
-)(withStyles(useStyles)(UserProfileSettings));
+)(withStyles(useStyles)(withRouter(UserProfileSettings)));

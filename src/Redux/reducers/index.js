@@ -5,6 +5,8 @@ import serviceDetailsReducer from "./ServiceDetailsReducer";
 import errorReducer from "./ErrorReducer";
 import loaderReducer from "./LoaderReducer";
 import stylesReducer from "./StylesReducer";
+import paymentReducer from "./PaymentReducer";
+import uiContentReducer from "./UiContentReducer";
 
 const rootReducer = combineReducers({
   userReducer,
@@ -13,6 +15,8 @@ const rootReducer = combineReducers({
   errorReducer,
   loaderReducer,
   stylesReducer,
+  paymentReducer,
+  uiContentReducer,
 });
 
 export default rootReducer;

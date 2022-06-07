@@ -1,8 +1,10 @@
 import React, { Component, lazy, Suspense } from "react";
 import Amplify from "aws-amplify";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { Router, Switch, Route } from "react-router-dom";
 import { ThemeProvider } from "@material-ui/styles";
 import { connect } from "react-redux";
+import ReactGA from "react-ga";
+import { createBrowserHistory } from "history";
 
 import Routes from "./utility/constants/Routes";
 import { aws_config } from "./config/aws_config";
@@ -13,7 +15,11 @@ import withInAppWrapper from "./components/HOC/WithInAppHeader";
 import { userActions } from "./Redux/actionCreators";
 import PrivateRoute from "./components/common/PrivateRoute";
 import AppLoader from "./components/common/AppLoader";
-import { initSdk } from "./utility/sdk";
+import { CircularProgress } from "@material-ui/core";
+import NetworkChangeOverlay from "./components/common/NetworkChangeOverlay";
+import initHotjar from "./assets/externalScripts/hotjar";
+import initGDPRNotification from "./assets/externalScripts/gdpr";
+import PaymentCancelled from "./components/ServiceDetails/PaymentCancelled";
 
 const ForgotPassword = lazy(() => import("./components/Login/ForgotPassword"));
 const ForgotPasswordSubmit = lazy(() => import("./components/Login/ForgotPasswordSubmit"));
@@ -28,25 +34,34 @@ const GetStarted = lazy(() => import("./components/GetStarted"));
 
 Amplify.configure(aws_config);
 
+ReactGA.initialize(process.env.REACT_APP_GA_TRACKING_ID);
+
+const history = createBrowserHistory();
+history.listen(location => {
+  ReactGA.set({ page: location.pathname });
+  ReactGA.pageview(location.pathname);
+});
+
+if (process.env.REACT_APP_HOTJAR_ID && process.env.REACT_APP_HOTJAR_SV) {
+  initHotjar(process.env.REACT_APP_HOTJAR_ID, process.env.REACT_APP_HOTJAR_SV);
+}
+initGDPRNotification();
+
 class App extends Component {
   componentDidMount = () => {
     this.props.fetchUserDetails();
   };
 
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    initSdk();
-  }
-
   render() {
-    const { hamburgerMenu, isInitialized, isLoggedIn, isTermsAccepted } = this.props;
+    const { isInitialized, isLoggedIn, isTermsAccepted } = this.props;
     if (!isInitialized) {
-      return <h2>Loading</h2>;
+      return <CircularProgress />;
     }
     return (
       <ThemeProvider theme={theme}>
-        <div className={hamburgerMenu ? "hide-overflow" : null}>
-          <Router>
-            <Suspense fallback={<div>Loading...</div>}>
+        <div>
+          <Router history={history}>
+            <Suspense fallback={<CircularProgress />}>
               <Switch>
                 <Route path={`/${Routes.SIGNUP}`} component={withRegistrationHeader(SignUp, headerData.SIGNUP)} />
                 <Route
@@ -61,6 +76,16 @@ class App extends Component {
                 />
                 <Route
                   path={`/${Routes.FORGOT_PASSWORD_SUBMIT}`}
+                  {...this.props}
+                  component={withRegistrationHeader(ForgotPasswordSubmit, headerData.FORGOT_PASSWORD_SUBMIT)}
+                />
+                <Route
+                  path={`/${Routes.RESET_PASSWORD}`}
+                  {...this.props}
+                  component={withRegistrationHeader(ForgotPassword, headerData.FORGOT_PASSWORD)}
+                />
+                <Route
+                  path={`/${Routes.RESET_PASSWORD_SUBMIT}`}
                   {...this.props}
                   component={withRegistrationHeader(ForgotPasswordSubmit, headerData.FORGOT_PASSWORD_SUBMIT)}
                 />
@@ -81,14 +106,29 @@ class App extends Component {
                 <PrivateRoute
                   isAllowed={isTermsAccepted}
                   redirectTo={`/${Routes.ONBOARDING}`}
+                  exact
                   path={`/${Routes.SERVICE_DETAILS}/org/:orgId/service/:serviceId`}
                   {...this.props}
                   component={withInAppWrapper(ServiceDetails)}
                 />
                 <PrivateRoute
+                  isAllowed={isTermsAccepted}
+                  redirectTo={`/${Routes.ONBOARDING}`}
+                  path={`/${Routes.SERVICE_DETAILS}/org/:orgId/service/:serviceId/order/:orderId/payment/:paymentId/execute`}
+                  {...this.props}
+                  component={withInAppWrapper(ServiceDetails)}
+                />
+                <PrivateRoute
+                  isAllowed={isTermsAccepted}
+                  redirectTo={`/${Routes.ONBOARDING}`}
+                  path={`/${Routes.SERVICE_DETAILS}/org/:orgId/service/:serviceId/order/:orderId/payment/:paymentId/cancel`}
+                  {...this.props}
+                  component={PaymentCancelled}
+                />
+                <PrivateRoute
                   isAllowed={isLoggedIn && isTermsAccepted}
                   redirectTo={isLoggedIn ? `/${Routes.ONBOARDING}` : `/${Routes.LOGIN}`}
-                  path={`/${Routes.USER_PROFILE}`}
+                  path={`/${Routes.USER_PROFILE}/:activeTab?`}
                   {...this.props}
                   component={withInAppWrapper(UserProfile)}
                 />
@@ -107,6 +147,7 @@ class App extends Component {
           </Router>
         </div>
         <AppLoader />
+        <NetworkChangeOverlay />
       </ThemeProvider>
     );
   }
@@ -115,7 +156,6 @@ class App extends Component {
 const mapStateToProps = state => ({
   isLoggedIn: state.userReducer.login.isLoggedIn,
   isTermsAccepted: state.userReducer.isTermsAccepted,
-  wallet: state.userReducer.wallet,
   isInitialized: state.userReducer.isInitialized,
   hamburgerMenu: state.stylesReducer.hamburgerMenu,
 });
@@ -124,7 +164,4 @@ const mapDispatchToProps = dispatch => ({
   fetchUserDetails: () => dispatch(userActions.fetchUserDetails),
 });
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(App);
+export default connect(mapStateToProps, mapDispatchToProps)(App);

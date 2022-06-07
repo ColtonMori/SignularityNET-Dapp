@@ -2,7 +2,8 @@ import { makeStyles } from "@material-ui/styles";
 
 export const useStyles = makeStyles(theme => ({
   serviceCollection: {
-    paddingLeft: 25,
-    "@media(max-width: 1023px)": { paddingLeft: 0 },
+    maxWidth: 1280,
+    margin: "0 auto",
+    padding: "20px 60px 0",
   },
 }));

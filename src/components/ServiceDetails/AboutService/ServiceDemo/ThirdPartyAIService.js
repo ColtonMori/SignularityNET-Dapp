@@ -4,11 +4,11 @@ import { withStyles } from "@material-ui/styles";
 
 import thirdPartyCustomUIComponents from "../../../../assets/thirdPartyServices";
 import { useStyles } from "./styles";
-import { serviceActions, serviceDetailsActions, loaderActions } from "../../../../Redux/actionCreators";
+import { serviceActions, loaderActions } from "../../../../Redux/actionCreators";
 import CompletedActions from "./CompletedActions";
 import { createServiceClient, callTypes } from "../../../../utility/sdk";
 import ThirdPartyServiceErrorBoundary from "./ThirdPartyServiceErrorBoundary";
-import { LoaderContent } from "../../../../utility/constants/LoaderContent";
+import { channelInfo } from "../../../../Redux/reducers/UserReducer";
 
 class ThirdPartyAIService extends Component {
   state = {
@@ -17,20 +17,21 @@ class ThirdPartyAIService extends Component {
       rating: "",
     },
     loading: true,
-    serviceRequestComplete: false,
   };
 
   componentDidMount = async () => {
-    const { org_id, service_id, freeCallsRemaining, groupInfo, wallet } = this.props;
+    const { org_id, service_id, freeCallsRemaining, groupInfo, wallet, channelInfo } = this.props;
     const callType = freeCallsRemaining > 0 ? callTypes.FREE : callTypes.REGULAR;
     this.serviceClient = await createServiceClient(
       org_id,
       service_id,
       groupInfo,
-      this.serviceRequestStartHandler,
-      this.serviceRequestCompleteHandler,
+      this.props.serviceRequestStartHandler,
+      this.props.serviceRequestCompleteHandler,
+      this.props.serviceRequestErrorHandler,
       callType,
-      wallet
+      wallet,
+      channelInfo
     );
     await this.setupComponent();
     this.setState({ loading: false });
@@ -44,20 +45,6 @@ class ThirdPartyAIService extends Component {
     this.fetchUserFeedback();
   };
 
-  serviceRequestStartHandler = () => {
-    this.props.startLoader();
-    this.setState({ serviceRequestComplete: false });
-  };
-
-  serviceRequestCompleteHandler = () => {
-    const { org_id, service_id, fetchMeteringData, freeCallsRemaining } = this.props;
-    if (freeCallsRemaining > 0) {
-      fetchMeteringData({ orgId: org_id, serviceId: service_id });
-    }
-    this.setState({ serviceRequestComplete: true });
-    this.props.stopLoader();
-  };
-
   fetchUserFeedback = async () => {
     const { org_id, service_id } = this.props;
     const feedback = await this.props.fetchFeedback(org_id, service_id);
@@ -67,24 +54,14 @@ class ThirdPartyAIService extends Component {
     this.setState({ feedback: { comment: feedback.data[0].comment[0], rating: feedback.data[0].rating } });
   };
 
-  handleResetAndRun = () => {
-    const { isComplete, resetServiceExecution, returnToPurchase } = this.props;
-    if (isComplete) {
-      resetServiceExecution();
-      return;
-    }
-    this.setState({ serviceRequestComplete: false });
-    returnToPurchase();
-  };
-
   render() {
     const { loading } = this.state;
     if (loading) {
       return null;
     }
 
-    const { org_id, service_id, classes, grpcResponse, stopLoader } = this.props;
-    const { feedback, serviceRequestComplete } = this.state;
+    const { org_id, service_id, classes, stopLoader, isServiceExecutionComplete, handleResetAndRun } = this.props;
+    const { feedback } = this.state;
     const { serviceClient } = this;
     const AIServiceCustomComponent = thirdPartyCustomUIComponents.componentFor(org_id, service_id);
 
@@ -94,19 +71,18 @@ class ThirdPartyAIService extends Component {
           <ThirdPartyServiceErrorBoundary stopLoader={stopLoader}>
             <AIServiceCustomComponent
               serviceClient={serviceClient}
-              isComplete={serviceRequestComplete}
-              response={grpcResponse}
-              sliderWidth={"550px"}
+              isComplete={isServiceExecutionComplete}
+              sliderWidth="550px"
             />
           </ThirdPartyServiceErrorBoundary>
         </Suspense>
         <CompletedActions
-          isComplete={serviceRequestComplete}
+          isComplete={isServiceExecutionComplete}
           feedback={feedback}
           orgId={org_id}
           serviceId={service_id}
           refetchFeedback={this.fetchUserFeedback}
-          handleResetAndRun={this.handleResetAndRun}
+          handleResetAndRun={handleResetAndRun}
         />
       </div>
     );
@@ -114,17 +90,15 @@ class ThirdPartyAIService extends Component {
 }
 
 const mapStateToProps = state => ({
-  grpcResponse: state.serviceReducer.serviceMethodExecution.response,
   isComplete: state.serviceReducer.serviceMethodExecution.isComplete,
   email: state.userReducer.email,
   wallet: state.userReducer.wallet,
+  channelInfo: channelInfo(state),
 });
 
 const mapDispatchToProps = dispatch => ({
-  startLoader: () => dispatch(loaderActions.startAppLoader(LoaderContent.SERVICE_INVOKATION)),
-  stopLoader: () => dispatch(loaderActions.stopAppLoader),
   fetchFeedback: (orgId, serviceId) => dispatch(serviceActions.fetchFeedback(orgId, serviceId)),
-  fetchMeteringData: args => dispatch(serviceDetailsActions.fetchMeteringData({ ...args })),
+  stopLoader: () => dispatch(loaderActions.startAppLoader),
 });
 
 export default connect(

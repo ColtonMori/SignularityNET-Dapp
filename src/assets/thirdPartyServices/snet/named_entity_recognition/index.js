@@ -1,312 +1,287 @@
 import React from "react";
-import { hasOwnDefinedProperty } from "../../../../utility/JSHelper";
 import Grid from "@material-ui/core/Grid";
-import FormControl from "@material-ui/core/FormControl";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
 import Button from "@material-ui/core/Button";
-import TextField from "@material-ui/core/TextField";
-import ExpansionPanel from "@material-ui/core/ExpansionPanel";
-import Typography from "@material-ui/core/Typography";
-import ExpansionPanelSummary from "@material-ui/core/ExpansionPanelSummary";
-import ExpansionPanelDetails from "@material-ui/core/ExpansionPanelDetails";
-import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
+import {RecognizeMessage} from "./named_entity_recognition_rpc_pb_service";
+import OutlinedDropDown from "../../common/OutlinedDropdown";
+import OutlinedTextArea from "../../common/OutlinedTextArea";
+import OutlinedLabel from "../../common/OutlinedLabel";
+import parse from 'html-react-parser';
 
 export default class NamedEntityRecognitionService extends React.Component {
   constructor(props) {
     super(props);
     this.submitAction = this.submitAction.bind(this);
-    this.handleServiceName = this.handleServiceName.bind(this);
     this.handleFormUpdate = this.handleFormUpdate.bind(this);
-    this.handleChange = this.handleChange.bind(this);
+    this.handleParameterChange = this.handleParameterChange.bind(this);
+    this.handleInputText = this.handleInputText.bind(this);
+
+    this.textInput = React.createRef();
 
     this.state = {
-      serviceName: undefined,
-      methodName: undefined,
-      message: undefined,
+      selectedExample: 0,
+      exampleList: [
+        {
+          label: "Custom text",
+          value: 0,
+          content: "",
+        },
+        {
+          label: "Example 1",
+          value: 1,
+          content: "Our concept of operations is to flow in our military assets with a priority to build up southern " +
+            "Texas, and then Arizona, and then California, Donald Trump said Monday, adding that the soldiers normally " +
+            "assigned weapons will be carrying them at the border.  We'll reinforce along priority points of entry, and " +
+            "while this happens, Trump Hotels is falling down in stock market.",
+        },
+      ],
+      serviceName: "RecognizeMessage",
+      methodName: "Recognize",
+      message: "",
       response: undefined,
-      styles: {
-        details: {
-          fontSize: 14,
-          alignItems: "center",
-        },
-        defaultFontSize: {
-          fontSize: 15,
-        },
-      },
+      reqStart: undefined,
     };
-    this.message = undefined;
-    this.isComplete = false;
-    this.serviceMethods = [];
-    this.allServices = [];
-    this.methodsForAllServices = [];
-    this.parseProps(props);
-  }
-
-  parseProps(nextProps) {
-    this.isComplete = nextProps.isComplete;
-    if (!this.isComplete) {
-      this.parseServiceSpec(nextProps.serviceSpec);
-    } else {
-      if (typeof nextProps.response !== "undefined") {
-        if (typeof nextProps.response === "string") {
-          this.setState({ response: nextProps.response });
-        } else {
-          this.setState({ response: nextProps.response.value });
-        }
-      }
-    }
-  }
-
-  componentWillReceiveProps(nextProps) {
-    if (this.isComplete !== nextProps.isComplete) {
-      this.parseProps(nextProps);
-    }
-  }
-
-  parseServiceSpec(serviceSpec) {
-    const packageName = Object.keys(serviceSpec.nested).find(
-      key => typeof serviceSpec.nested[key] === "object" && hasOwnDefinedProperty(serviceSpec.nested[key], "nested")
-    );
-
-    var objects = undefined;
-    var items = undefined;
-    if (typeof packageName !== "undefined") {
-      items = serviceSpec.lookup(packageName);
-      objects = Object.keys(items);
-    } else {
-      items = serviceSpec.nested;
-      objects = Object.keys(serviceSpec.nested);
-    }
-
-    this.methodsForAllServices = [];
-    objects.map(rr => {
-      if (typeof items[rr] === "object" && items[rr] !== null && items[rr].hasOwnProperty("methods")) {
-        this.allServices.push(rr);
-        this.methodsForAllServices.push(rr);
-        var methods = Object.keys(items[rr]["methods"]);
-        this.methodsForAllServices[rr] = methods;
-      }
-    });
   }
 
   handleFormUpdate(event) {
-    console.log(event.target);
     this.setState({ [event.target.name]: event.target.value });
-  }
+  };
 
-  handleServiceName(event) {
-    var strService = event.target.value;
-    this.setState({ serviceName: strService });
-    this.serviceMethods.length = 0;
-    var data = Object.values(this.methodsForAllServices[strService]);
-    if (typeof data !== "undefined") {
-      console.log("typeof data !== 'undefined'");
-      this.serviceMethods = data;
-    }
-  }
-
-  submitAction() {
-    this.props.callApiCallback(this.state.serviceName, this.state.methodName, {
-      value: btoa(this.state.message),
+  handleParameterChange(event) {
+    this.setState({
+      selectedExample: event.target.value,
+    }, () => {
+      if (this.state.selectedExample !== "default") {
+        this.state.exampleList.forEach(item => {
+          if (item.value == event.target.value) {
+            this.setState({ message: item.content }, () => {
+                this.textInput.current.inputRef.current.focus();
+              },
+            );
+          }
+        });
+      }
     });
   }
 
-  handleChange(event) {
+  handleInputText(event) {
     this.setState({ [event.target.name]: event.target.value });
   }
 
+  handleSentences() {
+    let tempMessages = this.state.message.toString().split("\n");
+    let tempArray = [];
+    for (let i = 0; i < tempMessages.length; i++) {
+      if (tempMessages[i].length >= 1) {
+        tempArray.push(tempMessages[i]);
+      }
+    }
+    let filterArray = tempArray.filter(function(el) {
+      return el != null;
+    });
+
+    let itemsToAnalyze = [];
+    for (let i = 0; i < filterArray.length; i++) {
+      itemsToAnalyze.push({ id: i + 1, sentence: filterArray[i] });
+    }
+    return itemsToAnalyze;
+  }
+
   parseResponse(response) {
-    //Temporary parse
-    //Will be improved and migrated to backend service soon
-    try {
-      let resultItems = [];
-      let responseArray = atob(response)
-        .split("[")
-        .join("")
-        .split("]")
-        .join("")
-        .split(")");
-      for (let i = 0; i < responseArray.length - 1; i++) {
-        let temp = "";
-        if (i === 0) {
-          temp = responseArray[i].substring(1, responseArray[i].length);
-        } else {
-          temp = responseArray[i].substring(3, responseArray[i].length);
-        }
-        let entityArrayItem = temp.split(",");
-        let tempEntity,
-          tempStartSpan,
-          tempEndSpan = {};
-        for (let j = 0; j < entityArrayItem.length; j++) {
-          let tempProperty = entityArrayItem[j];
-          tempProperty = entityArrayItem[j].replace(":", "").replace(",", "");
-          if (j % 2 === 0) {
-            if (tempProperty.includes("Start span")) {
-              tempStartSpan = { startSpan: entityArrayItem[j + 1] };
-            } else if (tempProperty.includes("End span")) {
-              tempEndSpan = { endSpan: entityArrayItem[j + 1] };
-            } else if (typeof tempProperty === "string") {
-              tempEntity = {
-                entity: {
-                  name: entityArrayItem[j].split("'").join(""),
-                  type: entityArrayItem[j + 1].split("'").join(""),
-                },
-              };
-            }
-          }
-        }
+    const responseArray = JSON.parse(response);
+    let resultItems = [];
+    for (let i = 0; i < responseArray.length; i++) {
+      const entityArrayItem = responseArray[i]["entities"];
+      for (let j = 0; j < entityArrayItem.length; j++) {
+        const entityItem = entityArrayItem[j];
+        const tempStartSpan = { startSpan: entityItem["start_span"] };
+        const tempEndSpan = { endSpan: entityItem["end_span"] };
+        const tempEntity = {
+          "entity": {
+            "name": entityItem["name"],
+            "type": entityItem["type"],
+          },
+        };
         resultItems.push(Object.assign(tempEntity, tempStartSpan, tempEndSpan));
       }
-      return resultItems;
-    } catch (e) {
-      return [];
     }
+    return resultItems;
+  }
+
+  canBeInvoked() {
+    return typeof this.state.message !== "undefined" && this.state.message.trim() !== "";
+  }
+
+  submitAction() {
+    const { methodName } = this.state;
+    const methodDescriptor = RecognizeMessage[methodName];
+    const request = new methodDescriptor.requestType();
+    request.setValue(JSON.stringify(this.handleSentences()));
+    const props = {
+      request,
+      onEnd: ({ message }) => {
+        this.setState({ value: message.getValue() });
+      },
+    };
+    this.props.serviceClient.unary(methodDescriptor, props);
+    this.setState({reqStart: new Date()});
   }
 
   renderForm() {
     return (
       <React.Fragment>
-        <Grid item xs={12}>
-          <br />
-          <br />
-          <FormControl style={{ minWidth: "100%" }}>
-            <Select
-              value={this.state.serviceName}
-              onChange={this.handleServiceName}
-              displayEmpty
-              name="serviceName"
-              style={this.state.styles.defaultFontSize}
-            >
-              <MenuItem style={this.state.styles.defaultFontSize} value={undefined}>
-                <em>Select a Service</em>
-              </MenuItem>
-              {this.allServices.map(item => (
-                <MenuItem style={this.state.styles.defaultFontSize} value={item} key={item}>
-                  {item}
-                </MenuItem>
-              ))}
-              ;
-            </Select>
-          </FormControl>
-          <br />
-          <FormControl style={{ minWidth: "100%" }}>
-            <Select
-              value={this.state.methodName}
-              onChange={this.handleFormUpdate}
-              displayEmpty
-              name="methodName"
-              style={this.state.styles.defaultFontSize}
-            >
-              <MenuItem style={this.state.styles.defaultFontSize} value={undefined}>
-                <em>Select a Method</em>
-              </MenuItem>
-              {this.serviceMethods.map(item => (
-                <MenuItem style={this.state.styles.defaultFontSize} value={item}>
-                  {item}
-                </MenuItem>
-              ))}
-              ;
-            </Select>
-          </FormControl>
-          <br />
-          <TextField
-            id="standard-multiline-static"
-            label="Input sentence"
-            style={{ width: "100%", fontSize: 24 }}
-            InputProps={{
-              style: { fontSize: 15 },
-            }}
-            InputLabelProps={{
-              style: { fontSize: 15 },
-            }}
-            multiline
-            rows="6"
-            value={this.state.message}
-            name="message"
-            onChange={this.handleChange}
-            defaultValue=""
-            margin="normal"
+        <Grid item xs={12} style={{ textAlign: "left" }}>
+
+          <OutlinedDropDown
+            id="params"
+            name="selected_example"
+            label="Parameters"
+            helperTxt="Select an example"
+            fullWidth={false}
+            list={this.state.exampleList}
+            value={this.state.selectedExample}
+            onChange={this.handleParameterChange}
+            htmlTooltip={
+              <div>
+                <p>Example1 option: This is an example of three sentences splited by break lines. </p>
+                <p>Custom text: This option keep the input area empty to you set your own sentence.</p>
+              </div>
+            }
           />
         </Grid>
-        <Grid item xs={12} style={{ textAlign: "center" }}>
-          <Button variant="contained" color="primary" onClick={this.submitAction}>
-            Invoke
-          </Button>
+        <Grid item xs={12} style={{ textAlign: "left" }}>
+
+          <OutlinedTextArea
+            id="input_text"
+            ref={this.textInput}
+            name="message"
+            label="Input Text"
+            value={this.state.message}
+            helperTxt={this.state.message.length + " / 5000 char "}
+            rows={5}
+            charLimit={5000}
+            onChange={this.handleInputText}
+            htmlTooltip={
+              <div>
+                <p>Write a sentence to be processed</p>
+              </div>
+            }
+          />
+
         </Grid>
         <Grid item xs={12} style={{ textAlign: "center" }}>
-          <br />
-          <h2>Examples</h2>
-          <ExpansionPanel>
-            <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography style={this.state.styles.defaultFontSize}>Sentence example</Typography>
-            </ExpansionPanelSummary>
-            <ExpansionPanelDetails style={this.state.styles.details}>
-              <pre
-                style={{
-                  whiteSpace: "pre-wrap",
-                  overflowX: "scroll",
-                }}
-              >
-                Our concept of operations is to flow in our military assets with a priority to build up southern Texas,
-                and then Arizona, and then California," Donald Trump said Monday, adding that the soldiers normally
-                assigned weapons will be carrying them at the border. " We'll reinforce along priority points of entry,
-                and while this happens, Trump Hotels is falling down in stock market.
-              </pre>
-            </ExpansionPanelDetails>
-          </ExpansionPanel>
-          <ExpansionPanel>
-            <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography style={this.state.styles.defaultFontSize}>Response example</Typography>
-            </ExpansionPanelSummary>
-            <ExpansionPanelDetails style={this.state.styles.details}>
-              <pre
-                style={{
-                  whiteSpace: "pre-wrap",
-                  overflowX: "scroll",
-                }}
-              >
-                oi
-                {/*[('Texas', 'LOCATION', 'Start span:', 97, 'End span:', 102), ('Arizona', 'LOCATION', 'Start span:', 113, 'End span:', 120), ('California', 'LOCATION', 'Start span:', 131, 'End span:', 141), ('Donald Trump', 'PERSON', 'Start span:', 144, 'End span:', 156), ('Trump Hotels', 'ORGANIZATION', 'Start span:', 331, 'End span:', 343)]*/}
-              </pre>
-            </ExpansionPanelDetails>
-          </ExpansionPanel>
+          <Button variant="contained" color="primary" onClick={this.submitAction} disabled={!this.canBeInvoked()}>
+            Invoke
+          </Button>
         </Grid>
       </React.Fragment>
     );
   }
 
   renderComplete() {
-    const result = this.parseResponse(this.props.response.value);
-    console.log("RESULT");
-    console.log(result);
+    const response = this.parseResponse(this.state.value);
+    const responseTime = (new Date() - this.state.reqStart) / 1000;
+    let highlitedText = this.state.message;
+    if(response){
+      response.map((item,index) => {
+        highlitedText = highlitedText.replace(item.entity.name, `<b>${item.entity.name}</b>`);
+      });
+    }
+
     return (
-      <React.Fragment>
-        <Grid item xs={12} style={{ textAlign: "center" }}>
-          <h4>Response from service is:</h4>
-          <br />
-          <div style={{ textAlign: "left", padding: 20, backgroundColor: "#E5EFFC" }}>
-            <h4>This is the entities found and it's positions in the inputed sentence.</h4>
-            <br />
-            {result.map(item => (
-              <div>
-                <h5>
-                  {item.entity.name} : {item.entity.type}
-                </h5>
-                <p>
-                  Start span: {item.startSpan} - End span: {item.endSpan}
-                </p>
-              </div>
-            ))}
-            ;
-          </div>
-        </Grid>
-      </React.Fragment>
+
+      <div style={{ background: "#F8F8F8", padding: "24px" }}>
+
+        <OutlinedLabel
+          infoTitle="Status"
+          value="Success"
+          variant="bottomLine"
+          htmlTooltip={
+            <p>Service status</p>
+          }
+        />
+
+        <OutlinedLabel
+          infoTitle="Time"
+          value={`${responseTime} seconds`}
+          variant="bottomLine"
+          htmlTooltip={
+            <p>Service processing time</p>
+          }
+        />
+
+        <OutlinedLabel
+          infoTitle="Input Text"
+          htmlValue={
+            <p>{parse(highlitedText)}</p>
+          }
+          // value={highlitedText}
+          variant="bottomLine"
+          htmlTooltip={
+            <p>Informed text</p>
+          }
+        />
+
+        <OutlinedLabel
+          infoTitle="Named Entity Recognition"
+          htmlValue={
+            <Grid container
+                  direction="row"
+                  justify="center"
+                  alignItems="center"
+            >
+              <Grid item xs={4}><span style={{ color: "#212121" }}>Entity</span></Grid>
+              <Grid item xs={4}><span style={{ color: "#212121" }}>Type</span></Grid>
+              <Grid item xs={4}><span style={{ color: "#212121" }}>Char position</span></Grid>
+              {response.map((item,index) => {
+
+                return (
+                  <Grid key={index} item xs={12}
+                        style={{
+                          padding: 0,
+                          marginTop: 12,
+                          backgroundColor: "rgba(155, 155, 155, 0.05)" }}
+                  >
+
+                    <Grid container
+                          direction="row"
+                          justify="center"
+                          alignItems="center"
+                    >
+
+                      <Grid item xs={4}>
+                        <span style={{ color: "#666" }}>{item.entity.name}</span>
+                      </Grid>
+
+                      <Grid item xs={4}>
+                          <span style={{ color: "#666" }}>
+                            {item.entity.type}
+                          </span>
+                      </Grid>
+
+                      <Grid item xs={4}>
+                          <span style={{ color: "#666" }}>
+                            {item.startSpan} - {item.endSpan}
+                          </span>
+                      </Grid>
+
+                    </Grid>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          }
+          variant="bottomLine"
+          htmlTooltip={
+            <p>Service response details</p>
+          }
+        />
+      </div>
+
     );
   }
 
   render() {
-    if (this.isComplete)
+    if (this.props.isComplete)
       return (
         <div style={{ flexGrow: 1 }}>
           <Grid

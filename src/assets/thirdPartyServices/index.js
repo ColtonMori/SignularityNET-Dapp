@@ -1,4 +1,5 @@
 import React, { lazy } from "react";
+import AlertBox from "../../components/common/AlertBox";
 
 const ExampleService = lazy(() => import("./snet/example_service"));
 const CNTKImageRecognition = lazy(() => import("./snet/cntk_image_recon"));
@@ -6,7 +7,7 @@ const CNTKNextDayTrend = lazy(() => import("./snet/cntk_next_day_trend"));
 const CNTKLSTMForecast = lazy(() => import("./snet/cntk_lstm_forecast"));
 const CNTKLanguageUnderstanding = lazy(() => import("./snet/cntk_language_understanding"));
 const I3DActionRecognition = lazy(() => import("./snet/i3d_video_action_recognition"));
-const OpenNMTRomanceTranslator = lazy(() => import("./snet/opennmt_romance_translator"));
+const OpenNMTRomanceTranslator = lazy(() => import("./snet/openmt_romance_translator"));
 const S2VTVideoCaptioning = lazy(() => import("./snet/s2vt_video_captioning"));
 const YOLOv3ObjectDetection = lazy(() => import("./snet/yolov3_object_detection"));
 const Zeta36ChessAlphaZero = lazy(() => import("./snet/zeta36_chess_alpha_zero"));
@@ -28,9 +29,9 @@ const FaceIdentityService = lazy(() => import("./snet/face_identity"));
 const EmotionRecognitionService = lazy(() => import("./snet/emotion_recognition_service"));
 const HolisticEdgeDetectionService = lazy(() => import("./snet/holistic_edge_detection_service"));
 const ImageRetrievalService = lazy(() => import("./snet/image_retrieval_service"));
-const GeneAnnotationService = lazy(() => import("./snet/gene_annotation_service"));
+const GeneAnnotationService = lazy(() => import("./mozi/gene_annotation_service"));
 const TranslationService = lazy(() => import("./snet/translation"));
-const NewsSummaryService = lazy(() => import("./NewsSummaryService"));
+const NewsSummaryService = lazy(() => import("./snet/news_summary"));
 const StyleTransfer = lazy(() => import("./snet/style_transfer"));
 const LanguageDetectionService = lazy(() => import("./snet/language_detection"));
 const CoreferenceResolutionService = lazy(() => import("./snet/coreference_resolution_service"));
@@ -41,8 +42,17 @@ const TopicAnalysis = lazy(() => import("./snet/topic_analysis"));
 const Places365SceneRecognition = lazy(() => import("./snet/places365_scene_recognition"));
 const SuperResolution = lazy(() => import("./snet/super_resolution"));
 const SemanticSegmentationAerial = lazy(() => import("./snet/semantic_segmentation_aerial"));
-const SiggraphColorization = lazy(() => import("./snet/siggraph_colorization"));
-const AlertBox = lazy(() => import("../../components/common/AlertBox"));
+const TextGeneration = lazy(() => import("./snet/text_generation"));
+const PneumoniaDiagnosis = lazy(() => import("./snet/pneumonia_diagnosis"));
+const OpenCogMiner = lazy(() => import("./snet/opencog_miner"));
+const MinecraftService = lazy(() => import("./snet/minecraftizing_service"));
+const MatchingService = lazy(() => import("./snet/match_service"));
+const SoundSpleeterService = lazy(() => import("./snet/sound_spleeter"));
+const RealTimeVoiceCloningService = lazy(() => import("./snet/real_time_voice_cloning"));
+const ColorizationService = lazy(() => import("./snet/deoldify-colorizer"));
+const FBProphetForecastService = lazy(() => import("./snet/fbprophet-forecast"));
+
+//ADD_CONSTANTS_HERE
 
 class ThirdPartyCustomUIComponents {
   constructor() {
@@ -57,7 +67,7 @@ class ThirdPartyCustomUIComponents {
   componentFor = (orgId, serviceId) => {
     const CustomUIComponent = this.customUIComponents[this._generateUniqueID(orgId, serviceId)];
     if (!CustomUIComponent) {
-      return <AlertBox type="error" message="No Component matched" />;
+      return () => <AlertBox type="error" message="No Component matched. Please check the orgId and serviceId" />;
     }
 
     return CustomUIComponent;
@@ -70,6 +80,19 @@ const thirdPartyCustomUIComponents = new ThirdPartyCustomUIComponents();
 
 const addSnetCustomUI = (serviceId, CustomUIComponent) => {
   thirdPartyCustomUIComponents.addCustomUIComponent("snet", serviceId, CustomUIComponent);
+};
+
+const addMoziCustomUI = (serviceId, CustomUIComponent) => {
+  thirdPartyCustomUIComponents.addCustomUIComponent("mozi", serviceId, CustomUIComponent);
+};
+
+//TODO remove before deploying to mainnet
+const addOrg2CustomUI = (serviceId, CustomUIComponent) => {
+  thirdPartyCustomUIComponents.addCustomUIComponent("org2", serviceId, CustomUIComponent);
+};
+
+const addAr3CustomUI = (serviceId, CustomUIComponent) => {
+  thirdPartyCustomUIComponents.addCustomUIComponent("ar3", serviceId, CustomUIComponent);
 };
 
 addSnetCustomUI("example-service", ExampleService);
@@ -101,7 +124,6 @@ addSnetCustomUI("face-identity", FaceIdentityService);
 addSnetCustomUI("emotion-recognition-service", EmotionRecognitionService);
 addSnetCustomUI("holistic-edge-detection-service", HolisticEdgeDetectionService);
 addSnetCustomUI("image-retrieval-service", ImageRetrievalService);
-addSnetCustomUI("gene-annotation-service", GeneAnnotationService);
 addSnetCustomUI("translation", TranslationService);
 addSnetCustomUI("news-summary", NewsSummaryService);
 addSnetCustomUI("style-transfer", StyleTransfer);
@@ -114,6 +136,42 @@ addSnetCustomUI("topic-analysis", TopicAnalysis);
 addSnetCustomUI("places365-scene-recognition", Places365SceneRecognition);
 addSnetCustomUI("super-resolution", SuperResolution);
 addSnetCustomUI("semantic-segmentation-aerial", SemanticSegmentationAerial);
-addSnetCustomUI("siggraph-colorization", SiggraphColorization);
+addSnetCustomUI("text-generation", TextGeneration);
+addSnetCustomUI("pneumonia-diagnosis", PneumoniaDiagnosis);
+addSnetCustomUI("opencog-miner", OpenCogMiner);
+addMoziCustomUI("gene-annotation-service", GeneAnnotationService);
+addSnetCustomUI("minecraftizing-service", MinecraftService);
+addSnetCustomUI("match-service", MatchingService);
+addSnetCustomUI("sound-spleeter", SoundSpleeterService);
+addSnetCustomUI("real-time-voice-cloning", RealTimeVoiceCloningService);
+addSnetCustomUI("deoldify-colorizer", ColorizationService);
+addSnetCustomUI("fbprophet-forecast", FBProphetForecastService);
+
+//TODO remove before deploying to mainnet
+addOrg2CustomUI("freecall", ExampleService);
+
+addAr3CustomUI("freecall", ExampleService);
+
+//ADD_UI_COMPONENTS_HERE
+
+thirdPartyCustomUIComponents.addCustomUIComponent(
+  "212a070e8a2244d4857762eaa8cb60df",
+  "age_classification",
+  ExampleService
+);
+
+thirdPartyCustomUIComponents.addCustomUIComponent(
+  "212a070e8a2244d4857762eaa8cb60df",
+  "age_classification_1",
+  ExampleService
+);
+
+thirdPartyCustomUIComponents.addCustomUIComponent(
+  "212a070e8a2244d4857762eaa8cb60df",
+  "age_classification_2",
+  ExampleService
+);
+
+thirdPartyCustomUIComponents.addCustomUIComponent("org_id_test_praveen", "test_claims", ExampleService);
 
 export default thirdPartyCustomUIComponents;

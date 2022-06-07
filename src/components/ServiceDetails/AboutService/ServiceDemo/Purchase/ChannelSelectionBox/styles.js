@@ -11,6 +11,7 @@ export const useStyles = theme => ({
       borderColor: theme.palette.text.primary,
       backgroundColor: "rgba(64,134,255,0.03)",
     },
+    "@media(max-width:480px)": { flexDirection: "column" },
   },
   disabledChannelBox: {
     borderWidth: 1,
@@ -28,6 +29,8 @@ export const useStyles = theme => ({
     padding: "14px 8px 14px 28px",
     display: "flex",
     alignItems: "center",
+    "@media(max-width:1023px)": { padding: "14px 0" },
+    "@media(max-width:480px)": { maxWidth: "100%" },
   },
   RadioButtonContainer: {
     "&.Mui-checked": { color: theme.palette.text.primary },
@@ -38,6 +41,10 @@ export const useStyles = theme => ({
       color: theme.palette.text.darkShadedGray,
       fontSize: 22,
       lineHeight: "30px",
+      "@media(max-width:1023px)": {
+        fontSize: 16,
+        lineHeight: "20px",
+      },
     },
     "& input": {
       width: 24,
@@ -50,14 +57,30 @@ export const useStyles = theme => ({
       backgroundColor: theme.palette.text.whiteColor,
       color: theme.palette.text.mediumShadeGray,
       fontSize: 16,
-      "&:disabled": { backgroundColor: theme.palette.text.cardBackground },
+      textAlign: "center",
+      "&:disabled": { backgroundColor: theme.palette.text.cardBackground, borderColor: "#eee" },
+      "@media(max-width:1023px)": { marginRight: 10 },
     },
     "& span": {
       color: theme.palette.text.lightShadedGray,
       lineHeight: "17px",
     },
   },
-  value: { fontSize: 18 },
+  disabledInputDataContainer: {
+    "& h2": {
+      color: theme.palette.text.disabledBtnBg,
+    },
+    "& input": {
+      color: theme.palette.text.disabledBtnBg,
+    },
+    "& span": {
+      color: theme.palette.text.disabledBtnBg,
+    },
+  },
+  value: {
+    fontSize: 18,
+    "@media(max-width:1023px)": { fontSize: 16 },
+  },
   unit: {
     marginLeft: 5,
     display: "inline-block",
@@ -76,6 +99,15 @@ export const useStyles = theme => ({
       color: theme.palette.text.mediumShadeGray,
       fontSize: 14,
       lineHeight: "21px",
+    },
+    "@media(max-width:480px)": {
+      maxWidth: "100%",
+      borderLeft: 0,
+    },
+  },
+  disabledSelectionBoxDescription: {
+    "& p": {
+      color: theme.palette.text.disabledBtnBg,
     },
   },
 });

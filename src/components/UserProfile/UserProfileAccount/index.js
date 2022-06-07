@@ -1,222 +1,131 @@
-import React, { Component } from "react";
+import React, { useEffect, useState } from "react";
+import { connect } from "react-redux";
 import Grid from "@material-ui/core/Grid";
 import { withStyles } from "@material-ui/styles";
-import InfoIcon from "@material-ui/icons/Info";
-import AppBar from "@material-ui/core/AppBar";
-import Tabs from "@material-ui/core/Tabs";
-import Tab from "@material-ui/core/Tab";
-import { connect } from "react-redux";
+import map from "lodash/map";
+import find from "lodash/find";
 
 import StyledDropdown from "../../common/StyledDropdown";
-import StyledButton from "../../common/StyledButton";
 import { useStyles } from "./styles";
-import { walletTypes } from "../../../Redux/actionCreators/UserActions";
-import { userActions, loaderActions } from "../../../Redux/actionCreators";
+import {
+  fetchAvailableUserWallets,
+  fetchWalletLinkedProviders,
+  walletTypes,
+} from "../../../Redux/actionCreators/UserActions";
+import { userActions } from "../../../Redux/actionCreators";
+import MetamaskDetails from "./MetamaskDetails";
 import { initSdk } from "../../../utility/sdk";
-import { cogsToAgi, txnTypes, agiToCogs } from "../../../utility/PricingStrategy";
-import StyledTextField from "../../common/StyledTextField";
-import { LoaderContent } from "../../../utility/constants/LoaderContent";
+import ProviderBalance from "./ProviderBalance";
 import AlertBox, { alertTypes } from "../../common/AlertBox";
+import ProvidersLinkedCount from "./ProvidersLinkedCount";
+import { startAppLoader, stopAppLoader } from "../../../Redux/actionCreators/LoaderActions";
+import { LoaderContent } from "../../../utility/constants/LoaderContent";
+import { initialWallet } from "../../../Redux/reducers/UserReducer";
 
-const walletDropdownList = Object.entries(walletTypes).map(([key, value]) => ({ value, label: key }));
+const UserProfileAccount = ({ classes, startAppLoader, stopAppLoader, wallet, updateWallet, fetchUserWallets }) => {
+  const [alert, setAlert] = useState({});
+  const [wallets, updateWallets] = useState([]);
+  const [linkedProviders, updateLinkedProviders] = useState([]);
+  useEffect(() => {
+    const fetchWallets = async () => {
+      const availableWallets = await fetchUserWallets();
+      const enhancedWallets = map(availableWallets, ({ address, type }) => {
+        return { address, type, value: address, label: `${type} (${address})` };
+      });
+      updateWallets(enhancedWallets);
+    };
+    fetchWallets();
+  }, [fetchUserWallets]);
 
-class UserProfileAccount extends Component {
-  state = {
-    activeTab: 0,
-    tokenBalance: "",
-    escrowBalance: "",
-    amount: {},
-    alert: {},
-  };
-
-  sdk;
-
-  componentDidMount = () => {
-    this.retrieveTokenBalance();
-    this.retriveEscrowBalance();
-  };
-
-  handleWalletTypeChange = async event => {
-    const { value } = event.target;
-    const { updateWallet } = this.props;
-    // if (value === walletTypes.METAMASK) {
-    //   // const address = await; //sdk funtion;
-    //   updateWallet({type:value, address});
-    //   return
-    // }
-    updateWallet({ type: value });
-  };
-
-  retrieveTokenBalance = async () => {
-    if (!this.sdk) {
-      this.sdk = await initSdk();
+  const isSameMetaMaskAddress = address => {
+    const selectedEthAddress = window.ethereum && window.ethereum.selectedAddress;
+    if (selectedEthAddress && address) {
+      return selectedEthAddress.toLowerCase() === address.toLowerCase();
     }
-    const escrowBalance = await this.sdk.account.escrowBalance();
-    const AGI = cogsToAgi(escrowBalance);
-    this.setState({ escrowBalance: AGI });
+
+    return false;
   };
 
-  retriveEscrowBalance = async () => {
-    if (!this.sdk) {
-      this.sdk = await initSdk();
+  const handleWalletTypeChange = async event => {
+    setAlert({});
+    const { value: selectedValue } = event.target;
+    const selectedWallet = find(wallets, ({ value }) => selectedValue === value);
+    if (!selectedWallet) {
+      updateWallet(initialWallet);
+      return;
     }
-    const tokenBalance = await this.sdk.account.balance();
-    const AGI = cogsToAgi(tokenBalance);
-    this.setState({ tokenBalance: AGI });
-  };
 
-  onTabChange = (...args) => {
-    this.setState({ activeTab: args[1] });
-  };
+    startAppLoader();
+    const organizations = await fetchWalletLinkedProviders(selectedWallet.address);
+    stopAppLoader();
+    updateLinkedProviders(organizations);
+    updateWallet(selectedWallet);
 
-  handleAmountChange = (event, txnType) => {
-    const { value } = event.target;
-    this.setState(prevState => ({ amount: { ...prevState.amount, [txnType]: value } }));
-  };
-
-  handleDeposit = async () => {
-    this.props.startDepositLoader();
-    if (!this.sdk) {
-      this.sdk = await initSdk();
+    if (selectedWallet.type === walletTypes.METAMASK) {
+      try {
+        if (isSameMetaMaskAddress(selectedWallet.address)) {
+          const selectedEthAddress = window.ethereum && window.ethereum.selectedAddress;
+          await initSdk(selectedEthAddress);
+          return;
+        }
+        if (!isSameMetaMaskAddress(selectedWallet.address)) {
+          setAlert({
+            type: alertTypes.ERROR,
+            message: `The selected wallet address does not match the address in the current metamask account. Please select the correct account in metamask and try again.`,
+          });
+        } else {
+          setAlert({ type: alertTypes.ERROR, message: `Unable to fetch Metamask address. Please try again` });
+        }
+      } catch (error) {
+        setAlert({ type: alertTypes.ERROR, message: `Something went wrong. Please try again` });
+      }
     }
-    try {
-      const amountInAGI = this.state.amount[txnTypes.DEPOSIT];
-      const amountInCogs = agiToCogs(amountInAGI);
-      const response = await this.sdk.account.depositToEscrowAccount(amountInCogs);
-      this.retrieveTokenBalance();
-      this.retriveEscrowBalance();
-      this.setState({ alert: { type: alertTypes.SUCCESS, message: "Successfully deposited" } });
-    } catch (err) {
-      this.setState({ alert: { type: alertTypes.ERROR, message: `Unable to deposit amount: ${err}` } });
-    }
-    this.props.stopLoader();
   };
 
-  handleWithDraw = async () => {
-    this.props.startWithdrawLoader();
-    if (!this.sdk) {
-      this.sdk = await initSdk();
-    }
-    try {
-      const amountInAGI = this.state.amount[txnTypes.WITHDRAW];
-      const amountInCogs = agiToCogs(amountInAGI);
-      const response = await this.sdk.account.withdrawFromEscrowAccount(amountInCogs);
-      this.retrieveTokenBalance();
-      this.retriveEscrowBalance();
-      this.setState({ alert: { type: alertTypes.SUCCESS, message: "Successfully withdrawn" } });
-    } catch (err) {
-      this.setState({ alert: { type: alertTypes.ERROR, message: `Unable to withdraw amount: ${err}` } });
-    }
-    this.props.stopLoader();
+  const walletDetails = {
+    [walletTypes.METAMASK]: isSameMetaMaskAddress(wallet.address) ? <MetamaskDetails /> : undefined,
   };
 
-  render() {
-    const { classes, wallet } = this.props;
-    const { activeTab, tokenBalance, escrowBalance, amount, alert } = this.state;
-
-    const tabs = [
-      {
-        name: "Deposit",
-        activeIndex: 0,
-        submitAction: this.handleDeposit,
-        component: (
-          <StyledTextField
-            label="AGI Token Amount"
-            value={amount[txnTypes.DEPOSIT]}
-            onChange={event => this.handleAmountChange(event, txnTypes.DEPOSIT)}
-          />
-        ),
-      },
-      {
-        name: "Withdraw",
-        activeIndex: 1,
-        submitAction: this.handleWithDraw,
-        component: (
-          <StyledTextField
-            label="AGI Token Amount"
-            value={amount[txnTypes.WITHDRAW]}
-            onChange={event => this.handleAmountChange(event, txnTypes.WITHDRAW)}
-          />
-        ),
-      },
-    ];
-    const activeComponent = tabs.filter(el => el.activeIndex === activeTab)[0];
-
-    return (
-      <Grid container spacing={10} className={classes.accountMainContainer}>
-        <Grid xs={12} sm={12} md={3} lg={3} className={classes.accountContainer}>
-          <h3>Payment / Transfer Method</h3>
-          <div className={classes.accountWrapper}>
-            <div className={classes.dropDown}>
-              <span className={classes.dropDownTitle}>Wallet</span>
-              <StyledDropdown
-                labelTxt={"Select a Wallet"}
-                list={walletDropdownList}
-                value={wallet.type}
-                onChange={this.handleWalletTypeChange}
-              />
-            </div>
-            <div className={classes.accountDetails}>
-              <div>
-                <div className={classes.label}>
-                  <InfoIcon />
-                  <span>Current Network</span>
-                </div>
-                <span>Ropsten Test Network</span>
-              </div>
-              <div>
-                <div className={classes.label}>
-                  <InfoIcon />
-                  <span>Wallet ID</span>
-                </div>
-                <span className={classes.walletId}>{wallet.address}</span>
-              </div>
-              <div className={classes.bgBox}>
-                <div className={classes.label}>
-                  <InfoIcon />
-                  <span>Total Tokens</span>
-                </div>
-                <span>{tokenBalance} AGI</span>
-              </div>
-              <div className={classes.bgBox}>
-                <div className={classes.label}>
-                  <InfoIcon />
-                  <span>Escrow Balance</span>
-                </div>
-                <span>{escrowBalance} AGI</span>
-              </div>
-            </div>
-            <div className={classes.tabsContainer}>
-              <AppBar position="static" className={classes.tabsHeader}>
-                <Tabs value={activeTab} onChange={this.onTabChange}>
-                  {tabs.map(value => (
-                    <Tab key={value.name} label={value.name} />
-                  ))}
-                </Tabs>
-              </AppBar>
-              {activeComponent.component}
-              <AlertBox type={alert.type} message={alert.message} />
-            </div>
-            <StyledButton type="blue" btnText={activeComponent.name} onClick={activeComponent.submitAction} />
+  const hasSelectedWallet = wallet.type !== initialWallet.type;
+  return (
+    <Grid container spacing={24} className={classes.accountMainContainer}>
+      <Grid item xs={12} sm={12} md={4} lg={4} className={classes.accountContainer}>
+        <h3>Payment / Transfer Method</h3>
+        <div className={classes.accountWrapper}>
+          <div className={classes.dropDown}>
+            <span className={classes.dropDownTitle}>Wallet</span>
+            <StyledDropdown
+              labelTxt="Select a Wallet"
+              list={wallets}
+              value={wallet.value}
+              onChange={handleWalletTypeChange}
+            />
           </div>
-        </Grid>
+          {walletDetails[wallet.type]}
+          <AlertBox type={alert.type} message={alert.message} />
+          {hasSelectedWallet && <ProvidersLinkedCount providerCount={linkedProviders.length} />}
+        </div>
       </Grid>
-    );
-  }
-}
+      {hasSelectedWallet && (
+        <Grid item xs={12} sm={12} md={8} lg={8} className={classes.providerBalMaincontainer}>
+          <ProviderBalance linkedProviders={linkedProviders} />
+        </Grid>
+      )}
+    </Grid>
+  );
+};
 
 const mapStateToProps = state => ({
   wallet: state.userReducer.wallet,
 });
 
-const mapDispatchToProps = dispatch => ({
-  updateWallet: args => dispatch(userActions.updateWallet({ ...args })),
-  startDepositLoader: () => dispatch(loaderActions.startAppLoader(LoaderContent.DEPOSIT)),
-  startWithdrawLoader: () => dispatch(loaderActions.startAppLoader(LoaderContent.WITHDRAW)),
-  stopLoader: () => dispatch(loaderActions.stopAppLoader),
-});
+const mapDispatchToProps = dispatch => {
+  return {
+    updateWallet: args => dispatch(userActions.updateWallet(args)),
+    startAppLoader: () => dispatch(startAppLoader(LoaderContent.FETCH_LINKED_PROVIDERS)),
+    stopAppLoader: () => dispatch(stopAppLoader),
+    fetchUserWallets: () => dispatch(fetchAvailableUserWallets),
+  };
+};
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withStyles(useStyles)(UserProfileAccount));
+export default connect(mapStateToProps, mapDispatchToProps)(withStyles(useStyles)(UserProfileAccount));

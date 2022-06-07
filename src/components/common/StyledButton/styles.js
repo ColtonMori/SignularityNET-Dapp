@@ -5,11 +5,11 @@ export const useStyles = makeStyles(theme => ({
     borderWidth: 1,
     borderStyle: "solid",
     borderColor: "transparent",
-    padding: "13px 28px 11px",
+    padding: "7px 28px",
     color: theme.palette.text.white,
     textTransform: "uppercase",
     fontFamily: theme.typography.primary.main,
-    fontWeight: 400,
+    fontWeight: 600,
     letterSpacing: "1.25px",
     lineHeight: "16px",
     "&:disabled": {
@@ -69,6 +69,19 @@ export const useStyles = makeStyles(theme => ({
       borderColor: theme.palette.text.transBlueBorderTextHover,
       backgroundColor: "rgba(0,90,203,0.05) !important",
       color: theme.palette.text.transBlueBorderTextHover,
+    },
+    "&:disabled": {
+      borderWidth: 2,
+      borderColor: theme.palette.text.disabledBtnBg,
+      color: theme.palette.text.disabledBtnBg,
+    },
+  },
+  whiteBorder: {
+    borderColor: theme.palette.text.white,
+    backgroundColor: "transparent",
+    color: theme.palette.text.white,
+    "&:hover": {
+      backgroundColor: "rgba(241,241,241,0.15)",
     },
   },
 }));

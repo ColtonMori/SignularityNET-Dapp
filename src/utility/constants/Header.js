@@ -29,30 +29,27 @@ export const headerData = {
 };
 
 const tabs = [
-  {
-    title: "AI Marketplace",
-    active: true,
-    link: `/${Routes.AI_MARKETPLACE}`,
-    openInNewTab: false,
-  },
-  {
-    title: "Get Started",
-    active: false,
-    link: `/${Routes.GET_STARTED}`,
-    openInNewTab: false,
-  },
+  { title: "AI Marketplace", link: `/${Routes.AI_MARKETPLACE}` },
+  { title: "Get Started", link: `/${Routes.GET_STARTED}` },
 ];
 
 const dropdowns = [
   {
+    label: "Products",
+    list: [
+      { label: "AGI Staking", link: "https://staking.singularitynet.io/", newTab: true },
+      { label: "Developer portal", link: "https://dev.singularitynet.io/", newTab: true },
+      { label: "AI Publisher", link: "https://publisher.singularitynet.io/", newTab: true },
+      { label: "Request for AI", link: "https://rfai.singularitynet.io/", newTab: true },
+    ],
+  },
+  {
     label: "Resources",
     list: [
-      { value: "", label: "Documentation" },
-      { value: "", label: "Dataset Download" },
-      { value: "", label: "API Library" },
-      { value: "", label: "Telegram" },
-      { value: "", label: "Forum" },
-      { value: "", label: "Blog" },
+      { label: "Documentation", link: "https://github.com/singnet", newTab: true },
+      { label: "Telegram", link: "https://telegram.me/singularitynet", newTab: true },
+      { label: "Forum", link: "https://community.singularitynet.io/", newTab: true },
+      { label: "Blog", link: "http://blog.singularitynet.io/", newTab: true },
     ],
   },
 ];

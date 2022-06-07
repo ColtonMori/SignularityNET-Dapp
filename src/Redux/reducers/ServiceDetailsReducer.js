@@ -2,8 +2,12 @@ import { serviceDetailsActions } from "../actionCreators";
 import find from "lodash/find";
 import first from "lodash/first";
 import some from "lodash/some";
+import map from "lodash/map";
 
-const InitialServiceDetails = {};
+const InitialServiceDetails = {
+  details: {},
+  freeCallsUsed: "",
+};
 
 const serviceDetailsReducer = (state = InitialServiceDetails, action) => {
   switch (action.type) {
@@ -11,13 +15,10 @@ const serviceDetailsReducer = (state = InitialServiceDetails, action) => {
       return InitialServiceDetails;
     }
     case serviceDetailsActions.UPDATE_SERVICE_DETAILS: {
-      return { ...state, ...action.payload.data };
+      return { ...state, details: action.payload };
     }
-    case serviceDetailsActions.UPDATE_FREE_CALLS_ALLOWED: {
-      return { ...state, freeCallsAllowed: action.payload };
-    }
-    case serviceDetailsActions.UPDATE_FREE_CALLS_REMAINING: {
-      return { ...state, freeCallsRemaining: action.payload };
+    case serviceDetailsActions.UPDATE_FREE_CALLS_INFO: {
+      return { ...state, freeCallsUsed: action.payload };
     }
     default: {
       return state;
@@ -25,9 +26,38 @@ const serviceDetailsReducer = (state = InitialServiceDetails, action) => {
   }
 };
 
-const groups = state => {
-  return state.serviceDetailsReducer.groups;
+export const freeCalls = state => {
+  const selectedGroup = groupInfo(state);
+  if (!selectedGroup) {
+    return {};
+  }
+  if (selectedGroup.free_calls === 0) {
+    return { allowed: 0, remaining: 0 };
+  }
+  return {
+    allowed: selectedGroup.free_calls,
+    remaining: selectedGroup.free_calls - state.serviceDetailsReducer.freeCallsUsed,
+  };
 };
+
+export const currentServiceDetails = state => {
+  return state.serviceDetailsReducer.details;
+};
+
+export const serviceDetails = (state, orgId, serviceId) => {
+  const { org_id, service_id } = currentServiceDetails(state);
+  if (org_id !== orgId || service_id !== serviceId) {
+    return undefined;
+  }
+
+  return currentServiceDetails(state);
+};
+
+const groups = state => {
+  return state.serviceDetailsReducer.details.groups;
+};
+
+const enhanceGroup = group => ({ ...group, endpoints: map(group.endpoints, ({ endpoint }) => endpoint) });
 
 export const groupInfo = state => {
   const serviceGroups = groups(state);
@@ -35,10 +65,12 @@ export const groupInfo = state => {
     some(endpoints, endpoint => endpoint.is_available === 1)
   );
   if (availableGroup) {
-    return availableGroup;
+    return enhanceGroup(availableGroup);
   }
   const firstGroup = first(serviceGroups);
-  return firstGroup;
+  if (firstGroup) {
+    return enhanceGroup(firstGroup);
+  }
 };
 
 export const pricing = state => {

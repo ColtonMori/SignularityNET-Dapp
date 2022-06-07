@@ -3,7 +3,7 @@ import { makeStyles } from "@material-ui/styles";
 export const useStyles = makeStyles(theme => ({
   cardItemsContainer: {
     flexWrap: "nowrap",
-    "@media(max-width: 480px)": { flexDirection: "column" },
+    "@media(max-width: 768px)": { flexDirection: "column" },
   },
   card: {
     padding: 10,
@@ -26,6 +26,7 @@ export const useStyles = makeStyles(theme => ({
   },
   cardHeader: {
     padding: "0 10px",
+    position: "relative",
     alignItems: "center",
     textAlign: "left",
     "& button": {
@@ -35,6 +36,7 @@ export const useStyles = makeStyles(theme => ({
       letterSpacing: 1.25,
     },
     "& .MuiCardHeader-avatar": { marginRight: 10 },
+    "@media(max-width: 1280px)": { padding: "0 0 0 16px" },
   },
   cardTitle: {
     display: "inline-block",
@@ -58,6 +60,7 @@ export const useStyles = makeStyles(theme => ({
   cardContent: {
     padding: "0 10px",
     "&:last-of-type": { paddingBottom: 0 },
+    "@media(max-width: 1280px)": { padding: "0 0 0 16px" },
   },
   cardTypograpy: {
     marginTop: 16,
@@ -65,6 +68,8 @@ export const useStyles = makeStyles(theme => ({
     fontFamily: theme.typography.primary.main,
     fontSize: 14,
     lineHeight: "20px",
+    textAlign: " left",
+    "@media(max-width: 1280px)": { marginTop: 5 },
   },
   showMore: {
     padding: 0,
@@ -89,6 +94,18 @@ export const useStyles = makeStyles(theme => ({
       marginBottom: 10,
       flexDirection: "column",
       alignItems: "flex-start",
+    },
+  },
+  cardActions: {
+    position: "absolute",
+    top: 10,
+    right: 20,
+    "@media(max-width: 1280px)": {
+      padding: 0,
+      display: "flex",
+      justifyContent: "flex-end",
+      position: "static",
+      "& button": { padding: "5px 8px" },
     },
   },
 }));

@@ -1,12 +1,15 @@
 import React from "react";
 import { withStyles } from "@material-ui/styles";
+import PropTypes from "prop-types";
 
 import ProgressSection, { ProgressStatusList } from "./ProgressSection";
 import { useStyles } from "./styles";
 
+export const progressTabStatus = { SUCCESS: "SUCCESS" };
+
 const ProgressBar = ({ classes, activeSection, progressText }) => {
-  const computeProgressStatus = (progressNumber, activeSection) => {
-    if (progressNumber < activeSection) {
+  const computeProgressStatus = (progressNumber, activeSection, progressStatus) => {
+    if (progressNumber < activeSection || progressStatus === progressTabStatus.SUCCESS) {
       return ProgressStatusList.COMPLETED;
     }
     if (progressNumber === activeSection) {
@@ -23,14 +26,19 @@ const ProgressBar = ({ classes, activeSection, progressText }) => {
         {progressText.map((text, index) => (
           <ProgressSection
             progressNumber={index + 1}
-            progressText={text}
-            progressStatus={computeProgressStatus(index + 1, activeSection)}
+            progressText={text.label}
+            progressStatus={computeProgressStatus(index + 1, activeSection, text.status)}
             key={text}
           />
         ))}
       </ul>
     </div>
   );
+};
+
+ProgressBar.propTypes = {
+  activeSection: PropTypes.number,
+  progressText: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default withStyles(useStyles)(ProgressBar);

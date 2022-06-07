@@ -1,52 +1,68 @@
-import { API } from "aws-amplify";
+import API from "@aws-amplify/api";
 
 import { APIEndpoints, APIPaths } from "../../config/APIEndpoints";
 import { initializeAPIOptions } from "../../utility/API";
-import { fetchAuthenticatedUser, walletTypes } from "./UserActions";
-import { userActions } from ".";
+import { fetchAuthenticatedUser } from "./UserActions";
+import { loaderActions } from "./";
+import { LoaderContent } from "../../utility/constants/LoaderContent";
+// import { cacheS3Url } from "../../utility/image";
 
 export const UPDATE_SERVICE_DETAILS = "UPDATE_SERVICE_DETAILS";
 export const RESET_SERVICE_DETAILS = "RESET_SERVICE_DETAILS";
-export const UPDATE_FREE_CALLS_ALLOWED = "UPDATE_FREE_CALLS_ALLOWED";
-export const UPDATE_FREE_CALLS_REMAINING = "UPDATE_FREE_CALLS_REMAINING";
+export const UPDATE_FREE_CALLS_INFO = "UPDATE_FREE_CALLS_INFO";
 
 const resetServiceDetails = dispatch => {
   dispatch({ type: RESET_SERVICE_DETAILS });
 };
-const fetchServiceDetailsSuccess = serviceDetails => dispatch => {
-  dispatch({ type: UPDATE_SERVICE_DETAILS, payload: serviceDetails });
+
+const fetchServiceDetailsFailure = err => dispatch => {
+  dispatch(loaderActions.stopAppLoader);
 };
 
-const fetchServiceDetailsAPI = async ({ orgId, serviceId }) => {
+const fetchServiceDetailsSuccess = serviceDetails => dispatch => {
+  // const enhancedServiceDetails = {
+  //   ...serviceDetails,
+  //   data: { ...serviceDetails.data, media: serviceDetails.data.media.map(el => ({ ...el, url: cacheS3Url(el.url) })) },
+  // };
+  dispatch(loaderActions.stopAppLoader);
+  dispatch({ type: UPDATE_SERVICE_DETAILS, payload: serviceDetails.data });
+};
+
+const fetchServiceDetailsAPI = async (orgId, serviceId) => {
   const url = `${APIEndpoints.CONTRACT.endpoint}/org/${orgId}/service/${serviceId}`;
   const response = await fetch(url);
   return response.json();
 };
 
-export const fetchServiceDetails = ({ orgId, serviceId }) => async dispatch => {
-  dispatch(resetServiceDetails);
-  const serviceDetails = await fetchServiceDetailsAPI({ orgId, serviceId });
-  dispatch(fetchServiceDetailsSuccess(serviceDetails));
-};
-
-const fetchMeteringDataSuccess = usageData => dispatch => {
-  const freeCallsRemaining = usageData.free_calls_allowed - usageData.total_calls_made;
-  dispatch({ type: UPDATE_FREE_CALLS_ALLOWED, payload: usageData.free_calls_allowed });
-  dispatch({ type: UPDATE_FREE_CALLS_REMAINING, payload: freeCallsRemaining });
-  if (freeCallsRemaining <= 0) {
-    dispatch(userActions.updateWallet({ type: walletTypes.METAMASK }));
+export const fetchServiceDetails = (orgId, serviceId) => async dispatch => {
+  try {
+    dispatch(loaderActions.startAppLoader(LoaderContent.FETCH_SERVICE_DETAILS));
+    dispatch(resetServiceDetails);
+    const serviceDetails = await fetchServiceDetailsAPI(orgId, serviceId);
+    dispatch(fetchServiceDetailsSuccess(serviceDetails));
+  } catch (error) {
+    dispatch(fetchServiceDetailsFailure(error));
+    throw error;
   }
 };
 
-const meteringAPI = (token, orgId, serviceId, userId) => {
+const fetchMeteringDataSuccess = usageData => dispatch => {
+  dispatch({
+    type: UPDATE_FREE_CALLS_INFO,
+    payload: usageData.total_calls_made,
+  });
+};
+
+const meteringAPI = (token, orgId, serviceId, groupId, userId) => {
   const apiName = APIEndpoints.USER.name;
-  const apiPath = `${APIPaths.FREE_CALL_USAGE}?organization_id=${orgId}&service_id=${serviceId}&username=${userId}`;
-  const apiOptions = initializeAPIOptions(token);
+  const apiPath = APIPaths.FREE_CALL_USAGE;
+  const queryParams = { organization_id: orgId, service_id: serviceId, group_id: groupId, username: userId };
+  const apiOptions = initializeAPIOptions(token, null, queryParams);
   return API.get(apiName, apiPath, apiOptions);
 };
 
-export const fetchMeteringData = ({ orgId, serviceId }) => async dispatch => {
-  const { email, token } = await fetchAuthenticatedUser();
-  const usageData = await meteringAPI(token, orgId, serviceId, email);
+export const fetchMeteringData = ({ orgId, serviceId, groupId }) => async dispatch => {
+  const { email, token } = await dispatch(fetchAuthenticatedUser());
+  const usageData = await meteringAPI(token, orgId, serviceId, groupId, email);
   return dispatch(fetchMeteringDataSuccess(usageData));
 };

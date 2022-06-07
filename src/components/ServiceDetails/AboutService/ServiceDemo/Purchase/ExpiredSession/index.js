@@ -1,29 +1,161 @@
-import React from "react";
+import React, { Component } from "react";
 import { withStyles } from "@material-ui/styles";
+import AccountBalanceWalletIcon from "@material-ui/icons/AccountBalanceWallet";
+import InfoIcon from "@material-ui/icons/Info";
+import Typography from "@material-ui/core/Typography";
+import { connect } from "react-redux";
+import { Fragment } from "react";
 
-import AlertBox from "../../../../../common/AlertBox";
-import StyledButton from "../../../../../common/StyledButton";
+import AlertBox, { alertTypes } from "../../../../../common/AlertBox";
 import { useStyles } from "./styles";
-import MetamaskFlow from "./MetamaskFlow";
+import { walletTypes } from "../../../../../../Redux/actionCreators/UserActions";
+import StyledDropdown from "../../../../../common/StyledDropdown";
+import PaymentInfoCard from "../PaymentInfoCard";
+import { initSdk } from "../../../../../../utility/sdk";
+import isEmpty from "lodash/isEmpty";
+import { userActions } from "../../../../../../Redux/actionCreators";
+import WalletDetailsToggler from "./WalletDetailsToggler";
+import { channelInfo } from "../../../../../../Redux/reducers/UserReducer";
+import { anyPendingTxn, anyFailedTxn } from "../../../../../../Redux/reducers/PaymentReducer";
 
-const ExpiredSession = ({ classes, handleComplete, metamask, groupInfo }) => {
-  const handleContinue = () => {
-    handleComplete();
-  };
-
-  if (metamask) {
-    return <MetamaskFlow handleContinue={handleContinue} classes={classes} groupInfo={groupInfo} />;
-  }
-  return (
-    <div className={classes.ExpiredSessionContainer}>
-      <AlertBox
-        type="warning"
-        message="You have used all your free quota for this service.  Please add a payment method to continue using this service. To know more about adding credits to your acount "
-        link="Click here"
-      />
-      <StyledButton type="blue" btnText="add payment" onClick={handleContinue} />
-    </div>
-  );
+const TransactionAlert = {
+  PENDING: { type: alertTypes.WARNING, message: "Transaction Confirmed. Pending token allocation" },
+  FAILED: { type: alertTypes.ERROR, message: "Transaction Failed. See history for more details" },
 };
 
-export default withStyles(useStyles)(ExpiredSession);
+class ExpiredSession extends Component {
+  handlePayTypeChange = async event => {
+    const { value } = event.target;
+    const { updateWallet, stopWalletDetailsPolling } = this.props;
+    this.setState({ alert: {} });
+    if (value === walletTypes.METAMASK) {
+      try {
+        const selectedEthAddress = window.ethereum && window.ethereum.selectedAddress;
+        const sdk = await initSdk(selectedEthAddress);
+        const address = await sdk.account.getAddress();
+
+        if (!isEmpty(address)) {
+          stopWalletDetailsPolling();
+          updateWallet({ type: value, address });
+          return;
+        }
+        this.setState({
+          alert: { type: alertTypes.ERROR, message: `Unable to fetch Metamask address. Please try again` },
+        });
+      } catch (error) {
+        this.setState({ alert: { type: alertTypes.ERROR, message: `Something went wrong. Please try again` } });
+      }
+    }
+    if (value === walletTypes.GENERAL) {
+      stopWalletDetailsPolling();
+      updateWallet({ type: value });
+      return;
+    }
+    updateWallet({ type: value });
+  };
+
+  transactionAlert = () => {
+    const { anyPendingTxn, anyFailedTxn, wallet } = this.props;
+    if (wallet.type === walletTypes.GENERAL && anyPendingTxn) {
+      return TransactionAlert.PENDING;
+    }
+    if (wallet.type === walletTypes.GENERAL && anyFailedTxn) {
+      return TransactionAlert.FAILED;
+    }
+    return {};
+  };
+
+  render() {
+    const {
+      classes,
+      wallet,
+      handleComplete,
+      groupInfo,
+      handlePurchaseError,
+      isServiceAvailable,
+      channelInfo,
+    } = this.props;
+    const channelPaymentOptions = [
+      { value: walletTypes.GENERAL, label: "General Account Wallet" },
+      { value: walletTypes.METAMASK, label: "Metamask" },
+    ];
+    return (
+      <div className={classes.mainContainer}>
+        <Typography variant="body1" className={classes.description}>
+          You have run out of free trial. Please select a payment method to continue
+        </Typography>
+        <AlertBox
+          type={alertTypes.WARNING}
+          message={
+            <Fragment>
+              <span>
+                We have temporarily disabled this action as we are hard forking the AGI token to make it cross chain
+                compatible. We will enable it as soon as the hard fork is completed. Read more
+              </span>
+              <a
+                href="https://blog.singularitynet.io/singularitynet-phase-ii-launch-sequence-activated-agi-token-to-be-hard-forked-to-10ede4b6c89"
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                here
+              </a>
+            </Fragment>
+          }
+        />
+        <div className={classes.paymentChannelAndDetails}>
+          <div className={classes.paymentChannelDropDownContainer}>
+            <InfoIcon className={classes.infoIconContainer} />
+            <div className={classes.paymentChannelDropDown}>
+              <Typography className={classes.dropDownTitle} variant="subtitle1">
+                Payment Channel
+              </Typography>
+              <AccountBalanceWalletIcon className={classes.walletIcon} />
+              <StyledDropdown
+                disabled
+                labelTxt="Select a Wallet"
+                list={channelPaymentOptions}
+                value={wallet.type || "default"}
+                onChange={this.handlePayTypeChange}
+              />
+            </div>
+          </div>
+          <div className={classes.channelBalance}>
+            <PaymentInfoCard
+              show={!isEmpty(channelInfo) && wallet.type === walletTypes.GENERAL}
+              title="Channel Balance"
+              value={!isEmpty(channelInfo) && channelInfo.balanceInAgi}
+              unit="AGI"
+            />
+          </div>
+          <AlertBox {...this.transactionAlert()} />
+        </div>
+        <WalletDetailsToggler
+          show={wallet.type !== walletTypes.DEFAULT}
+          metamask={wallet.type === walletTypes.METAMASK}
+          generalWalletProps={{ handleContinue: handleComplete }}
+          metamaskProps={{
+            handleContinue: handleComplete,
+            groupInfo,
+            handlePurchaseError,
+            isServiceAvailable,
+          }}
+        />
+      </div>
+    );
+  }
+}
+
+const mapStateToProps = state => ({
+  wallet: state.userReducer.wallet,
+  channelInfo: channelInfo(state),
+  anyPendingTxn: anyPendingTxn(state),
+  anyFailedTxn: anyFailedTxn(state),
+});
+
+const mapDispatchToProps = dispatch => ({
+  updateWallet: args => dispatch(userActions.updateWallet(args)),
+  registerWallet: (address, type) => dispatch(userActions.registerWallet(address, type)),
+  stopWalletDetailsPolling: () => dispatch(userActions.stopWalletDetailsPolling),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(withStyles(useStyles)(ExpiredSession));

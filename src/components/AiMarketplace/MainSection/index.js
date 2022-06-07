@@ -8,10 +8,11 @@ import ServiceCollection from "./ServiceCollection";
 import { useStyles } from "./styles";
 import { serviceActions } from "../../../Redux/actionCreators";
 import { filterAttributes, generateFilterObject } from "../../../utility/constants/Pagination";
+import { isDesktop } from "../../../utility/constants/UXProperties";
 
 class MainSection extends Component {
   state = {
-    listView: true,
+    listView: false,
   };
 
   componentDidMount = () => {
@@ -46,18 +47,8 @@ class MainSection extends Component {
     const { listView } = this.state;
     return (
       <Grid container spacing={24} className={classes.mainSection}>
-        <Grid item xs={12} sm={3} md={3} lg={3}>
-          <Filter />
-        </Grid>
-        <Grid item xs={12} sm={9} md={9} lg={9}>
-          <ServiceCollection
-            data={services}
-            paginationProps={{
-              limit: pagination.limit,
-              offset: pagination.offset,
-              total_count: pagination.total_count,
-              handleChange: this.handlePaginationChange,
-            }}
+        <Grid item xs={12} sm={12} md={12} lg={12} className={classes.filterMainContainer}>
+          <Filter
             toolbarProps={{
               listView,
               total_count: pagination.total_count,
@@ -65,6 +56,21 @@ class MainSection extends Component {
               toggleView: this.toggleView,
               currentPagination: pagination,
               currentFilter,
+              showToggler: isDesktop,
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} sm={12} md={12} lg={12} className={classes.servieMainContainer}>
+          <ServiceCollection
+            cardGroupProps={{
+              data: services,
+              listView,
+            }}
+            paginationProps={{
+              limit: pagination.limit,
+              offset: pagination.offset,
+              total_count: pagination.total_count,
+              handleChange: this.handlePaginationChange,
             }}
           />
         </Grid>
@@ -86,7 +92,4 @@ const mapDispatchToProps = dispatch => ({
   fetchFilterData: attribute => dispatch(serviceActions.fetchFilterData(attribute)),
 });
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(withStyles(useStyles)(MainSection));
+export default connect(mapStateToProps, mapDispatchToProps)(withStyles(useStyles)(MainSection));

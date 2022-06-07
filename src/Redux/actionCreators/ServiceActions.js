@@ -1,8 +1,10 @@
-import { Auth, API } from "aws-amplify";
+import API from "@aws-amplify/api";
 
 import { APIEndpoints, APIPaths } from "../../config/APIEndpoints";
-import { loaderActions } from "./";
+import { loaderActions, userActions } from "./";
+import { LoaderContent } from "../../utility/constants/LoaderContent";
 import { initializeAPIOptions } from "../../utility/API";
+// import { cacheS3Url } from "../../utility/image";
 
 export const UPDATE_SERVICE_LIST = "SET_SERVICE_LIST";
 export const UPDATE_PAGINATION_DETAILS = "SET_PAGINATION_DETAILS";
@@ -29,6 +31,10 @@ export const fetchServiceSuccess = res => dispatch => {
       total_count: res.data.total_count,
     },
   });
+  // const enhancedResult = res.data.result.map(service => ({
+  //   ...service,
+  //   media: { ...service.media, url: service.media.url ? cacheS3Url(service.media.url) : null },
+  // }));
   dispatch({ type: UPDATE_SERVICE_LIST, payload: res.data.result });
   dispatch(loaderActions.stopAIServiceListLoader);
 };
@@ -86,10 +92,46 @@ const fetchFeedbackAPI = (email, orgId, serviceId, token) => {
   return API.get(apiName, path, apiOptions);
 };
 
+const fetchAuthTokenAPI = (serviceId, groupId, publicKey, orgId, userId, token) => {
+  const apiName = APIEndpoints.SIGNER_SERVICE.name;
+  const apiPath = APIPaths.FREE_CALL_TOKEN;
+  const queryParams = {
+    service_id: serviceId,
+    group_id: groupId,
+    public_key: publicKey,
+    org_id: orgId,
+    user_id: userId,
+  };
+  const apiOptions = initializeAPIOptions(token, null, queryParams);
+  return API.get(apiName, apiPath, apiOptions);
+};
+
+export const downloadAuthToken = (serviceId, groupId, publicKey, orgId) => async dispatch => {
+  try {
+    dispatch(loaderActions.startAppLoader(LoaderContent.GENERATE_AUTH_TOKEN));
+    const { token, email } = await dispatch(userActions.fetchAuthenticatedUser());
+
+    const { data } = await fetchAuthTokenAPI(serviceId, groupId, publicKey, orgId, email, token);
+
+    const jsonToDownload = {
+      email,
+      tokenToMakeFreeCall: data.token_to_make_free_call,
+      tokenExpirationBlock: data.token_expiration_block,
+    };
+    const downloadBlob = new Blob([JSON.stringify(jsonToDownload)], { type: "text/json;charset=utf-8" });
+    const downloadURL = window.URL.createObjectURL(downloadBlob);
+    dispatch(loaderActions.stopAppLoader);
+    return downloadURL;
+  } catch (e) {
+    dispatch(loaderActions.stopAppLoader);
+    throw e;
+  }
+};
+
 //Username review
-export const fetchFeedback = (orgId, serviceId) => async () => {
-  const currentUser = await Auth.currentAuthenticatedUser({ bypassCache: true });
-  return fetchFeedbackAPI(currentUser.email, orgId, serviceId, currentUser.signInUserSession.idToken.jwtToken);
+export const fetchFeedback = (orgId, serviceId) => async dispatch => {
+  const { email, token } = await dispatch(userActions.fetchAuthenticatedUser());
+  return fetchFeedbackAPI(email, orgId, serviceId, token);
 };
 
 const submitFeedbackAPI = (feedbackObj, token) => {
@@ -99,8 +141,8 @@ const submitFeedbackAPI = (feedbackObj, token) => {
   return API.post(apiName, path, apiOptions);
 };
 
-export const submitFeedback = (orgId, serviceId, feedback) => async () => {
-  const currentUser = await Auth.currentAuthenticatedUser({ bypassCache: true });
+export const submitFeedback = (orgId, serviceId, feedback) => async dispatch => {
+  const { token } = await dispatch(userActions.fetchAuthenticatedUser());
   const feedbackObj = {
     feedback: {
       org_id: orgId,
@@ -109,5 +151,5 @@ export const submitFeedback = (orgId, serviceId, feedback) => async () => {
       comment: feedback.comment,
     },
   };
-  return submitFeedbackAPI(feedbackObj, currentUser.signInUserSession.idToken.jwtToken);
+  return submitFeedbackAPI(feedbackObj, token);
 };

@@ -9,8 +9,8 @@ const Title = ({ title }) => {
   const classes = useStyles();
   return (
     <h1 className={classes.h1}>
-      <Link to={Routes.AI_MARKETPLACE} className={classes.logoAnchor}>
-        <img src={SnetSvgLogo} alt="SingularityNET" />
+      <Link to={`/${Routes.AI_MARKETPLACE}`} className={classes.logoAnchor}>
+        <img src={SnetSvgLogo} alt="SingularityNET" loading="lazy" />
       </Link>
     </h1>
   );

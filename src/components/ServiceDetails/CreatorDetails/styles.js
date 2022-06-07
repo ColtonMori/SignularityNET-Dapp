@@ -4,19 +4,26 @@ export const useStyles = theme => ({
     borderRadius: 4,
     backgroundColor: theme.palette.text.white,
     paddingBottom: 1,
+    marginBottom: 25,
+  },
+  content: {
+    paddingLeft: 22,
   },
   companyInfo: {
-    paddingLeft: 22,
     margin: "10px 0 20px",
     display: "flex",
     alignItems: "center",
+    "& img": {
+      "@media(max-width:1023px)": { width: 48 },
+    },
   },
   companyName: {
     paddingLeft: 20,
-    "& h4": {
+    "& h3": {
       margin: 0,
       color: theme.palette.text.primary,
       fontSize: 18,
+      fontWeight: 600,
       letterSpacing: "0.23px",
       lineHeight: "24px",
     },
@@ -42,5 +49,27 @@ export const useStyles = theme => ({
       color: theme.palette.text.mediumShadeGray,
       fontSize: 12,
     },
+  },
+  footer: {
+    backgroundColor: theme.palette.text.cardBackground,
+    borderTop: `1px solid ${theme.palette.text.lightGray}`,
+    color: theme.palette.text.mediumShadeGray,
+    fontSize: 14,
+    textAlign: "center",
+    "& span": {
+      display: "inline-block",
+      verticalAlign: "middle",
+      cursor: "pointer",
+      height: 24,
+      marginTop: 14,
+      "& svg": { verticalAlign: "middle" },
+    },
+    height: 56,
+  },
+  avatar: {
+    width: 72,
+    height: 72,
+    display: "inline-block",
+    "& img": { width: "100%" },
   },
 });

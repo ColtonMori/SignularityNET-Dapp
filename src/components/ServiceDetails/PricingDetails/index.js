@@ -8,16 +8,10 @@ import { useStyles } from "./styles";
 import Price from "./Price";
 import { PricingStrategy } from "../../../utility/PricingStrategy";
 
-const PricingDetails = ({ classes, pricing }) => {
+const PricingDetails = ({ classes, pricing, serviceAvailable, handleDemoClick }) => {
   const price_strategy = new PricingStrategy(pricing);
   const priceInAGI = typeof price_strategy === "undefined" ? undefined : price_strategy.getMaxPriceInAGI();
   const price_model = typeof price_strategy === "undefined" ? undefined : price_strategy.getPriceModel();
-  const handleClick = () => {
-    window.scroll({
-      top: 520,
-      behavior: "smooth",
-    });
-  };
 
   return (
     <Grid item xs={12} sm={12} md={4} lg={4} className={classes.creditsContainer}>
@@ -28,7 +22,11 @@ const PricingDetails = ({ classes, pricing }) => {
         <InfoIcon className={classes.infoIcon} />
         <span>{price_model}</span>
       </p>
-      <StyledButton btnText="demo" onClick={handleClick} />
+      <StyledButton
+        btnText={!serviceAvailable ? "demo offline" : "demo"}
+        onClick={handleDemoClick}
+        disabled={!serviceAvailable}
+      />
     </Grid>
   );
 };

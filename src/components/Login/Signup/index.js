@@ -5,19 +5,21 @@ import { withStyles } from "@material-ui/styles";
 import { connect } from "react-redux";
 
 import Routes from "../../../utility/constants/Routes";
-import { isValidEmail } from "../../../utility/Validation";
-import { parseError } from "../../../utility/ErrorHandling";
 import { useStyles } from "./styles";
 import RenderForm from "./RenderForm";
 import RenderOTP from "./RenderOTP";
-import { userActions } from "../../../Redux/actionCreators";
+import { userActions, loaderActions } from "../../../Redux/actionCreators";
+import { LoaderContent } from "../../../utility/constants/LoaderContent";
+import { alertTypes } from "../../common/AlertBox";
+import { signupFormConstraints, singupOtpContraints } from "./validationConstraints";
+import snetValidator from "../../../utility/snetValidator";
 
 class SignUp extends Component {
   state = {
     nickname: "",
     email: "",
     password: "",
-    error: undefined,
+    alert: {},
     toBeConfirmed: false,
     otp: "",
   };
@@ -27,7 +29,7 @@ class SignUp extends Component {
   };
 
   handleEmail = event => {
-    this.setState({ email: event.currentTarget.value });
+    this.setState({ email: event.currentTarget.value.toLowerCase() });
   };
 
   handlePassword = event => {
@@ -40,25 +42,16 @@ class SignUp extends Component {
 
   handleSubmit = event => {
     event.preventDefault();
+    this.setState({ alert: {} });
+    const isNotValid = snetValidator(this.state, signupFormConstraints);
+    if (isNotValid) {
+      this.setState({ alert: { type: alertTypes.ERROR, message: isNotValid[0] } });
+      return;
+    }
     const { nickname, password, email } = this.state;
-    this.setState({ error: undefined });
-    if (nickname === "") {
-      this.setState({ error: "Please enter a nickname" });
-      return;
-    }
-    if (email === "") {
-      this.setState({ error: "Email cannot be left blank" });
-      return;
-    }
-    if (!isValidEmail(email)) {
-      this.setState({ error: "Please enter a valid email" });
-      return;
-    }
-    if (password === "") {
-      this.setState({ error: "Password cannot be left blank" });
-      return;
-    }
+    const { startSignupLoader, stopLoader } = this.props;
 
+    startSignupLoader();
     Auth.signUp({
       username: email,
       password,
@@ -70,11 +63,21 @@ class SignUp extends Component {
       .then(user => {
         this.props.updateNickname(nickname);
         this.setState({ toBeConfirmed: true });
+        stopLoader();
       })
-      .catch(err => this.setState({ error: err.message }));
+      .catch(err => {
+        this.setState({ alert: { type: alertTypes.ERROR, message: err.message } });
+        stopLoader();
+      });
   };
 
   handleConfirmSignup = event => {
+    this.setState({ alert: {} });
+    const isNotValid = snetValidator(this.state, singupOtpContraints);
+    if (isNotValid) {
+      this.setState({ alert: { type: alertTypes.ERROR, message: isNotValid[0] } });
+      return;
+    }
     const { email, otp } = this.state;
     const { history, updateEmail } = this.props;
     event.preventDefault();
@@ -86,26 +89,25 @@ class SignUp extends Component {
         updateEmail(email);
         history.push(route);
       })
-      .catch(err => {
-        let error = parseError(err);
-        this.setState({ error });
+      .catch(() => {
+        this.setState({ alert: { type: alertTypes.ERROR, message: "email confirmation failed. Please try again" } });
       });
   };
 
   handleResendOTP = () => {
-    this.setState({ error: undefined });
+    this.setState({ alert: {} });
     const { email } = this.state;
     Auth.resendSignUp(email)
       .then(() => {
-        this.setState({ error: "code resent successfully" });
+        this.setState({ alert: { type: alertTypes.SUCCESS, message: "code resent successfully" } });
       })
       .catch(err => {
-        this.setState({ error: err.message });
+        this.setState({ alert: { type: alertTypes.ERROR, message: err.message } });
       });
   };
 
   render() {
-    const { nickname, email, password, otp, error, toBeConfirmed } = this.state;
+    const { nickname, email, password, otp, alert, toBeConfirmed } = this.state;
     const { classes } = this.props;
 
     return (
@@ -117,7 +119,7 @@ class SignUp extends Component {
               handleOTP={this.handleOTP}
               handleResendOTP={this.handleResendOTP}
               handleConfirmSignup={this.handleConfirmSignup}
-              error={error}
+              alert={alert}
             />
           ) : (
             <RenderForm
@@ -127,7 +129,7 @@ class SignUp extends Component {
               handleEmail={this.handleEmail}
               password={password}
               handlePassword={this.handlePassword}
-              error={error}
+              alert={alert}
               handleSubmit={this.handleSubmit}
             />
           )}
@@ -138,11 +140,10 @@ class SignUp extends Component {
 }
 
 const mapDispatchToProps = dispatch => ({
+  startSignupLoader: () => dispatch(loaderActions.startAppLoader(LoaderContent.SIGNUP)),
+  stopLoader: () => dispatch(loaderActions.stopAppLoader),
   updateNickname: nickname => dispatch(userActions.updateNickname(nickname)),
   updateEmail: email => dispatch(userActions.updateEmail(email)),
 });
 
-export default connect(
-  null,
-  mapDispatchToProps
-)(withStyles(useStyles)(SignUp));
+export default connect(null, mapDispatchToProps)(withStyles(useStyles)(SignUp));
