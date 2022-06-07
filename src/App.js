@@ -13,6 +13,7 @@ import withInAppWrapper from "./components/HOC/WithInAppHeader";
 import { userActions } from "./Redux/actionCreators";
 import PrivateRoute from "./components/common/PrivateRoute";
 import AppLoader from "./components/common/AppLoader";
+import { initSdk } from "./utility/sdk";
 
 const ForgotPassword = lazy(() => import("./components/Login/ForgotPassword"));
 const ForgotPasswordSubmit = lazy(() => import("./components/Login/ForgotPasswordSubmit"));
@@ -23,21 +24,22 @@ const SignUp = lazy(() => import("./components/Login/Signup"));
 const Login = lazy(() => import("./components/Login"));
 const ServiceDetails = lazy(() => import("./components/ServiceDetails"));
 const UserProfile = lazy(() => import("./components/UserProfile"));
+const GetStarted = lazy(() => import("./components/GetStarted"));
 
 Amplify.configure(aws_config);
 
 class App extends Component {
   componentDidMount = () => {
-    this.props.setUserDetails();
+    this.props.fetchUserDetails();
   };
 
-  componentDidMount = () => {
-    this.props.setUserDetails();
-  };
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    initSdk();
+  }
 
   render() {
-    const { hamburgerMenu } = this.props;
-    if (!this.props.isInitialized) {
+    const { hamburgerMenu, isInitialized, isLoggedIn, isTermsAccepted } = this.props;
+    if (!isInitialized) {
       return <h2>Loading</h2>;
     }
     return (
@@ -52,33 +54,53 @@ class App extends Component {
                   {...this.props}
                   component={withRegistrationHeader(Login, headerData.LOGIN)}
                 />
-                <PrivateRoute
+                <Route
                   path={`/${Routes.FORGOT_PASSWORD}`}
                   {...this.props}
                   component={withRegistrationHeader(ForgotPassword, headerData.FORGOT_PASSWORD)}
                 />
-                <PrivateRoute
+                <Route
                   path={`/${Routes.FORGOT_PASSWORD_SUBMIT}`}
                   {...this.props}
                   component={withRegistrationHeader(ForgotPasswordSubmit, headerData.FORGOT_PASSWORD_SUBMIT)}
                 />
                 <PrivateRoute
+                  isAllowed={isLoggedIn}
+                  redirectTo={`/${Routes.LOGIN}`}
                   path={`/${Routes.ONBOARDING}`}
                   {...this.props}
                   component={withRegistrationHeader(Onboarding, headerData.ONBOARDING)}
                 />
-                <Route path={`/${Routes.AI_MARKETPLACE}`} {...this.props} component={withInAppWrapper(AiMarketplace)} />
-                <Route
-                  path={`/${Routes.SERVICE_DETAILS}/:service_row_id`}
+                <PrivateRoute
+                  isAllowed={isTermsAccepted}
+                  redirectTo={`/${Routes.ONBOARDING}`}
+                  path={`/${Routes.AI_MARKETPLACE}`}
+                  {...this.props}
+                  component={withInAppWrapper(AiMarketplace)}
+                />
+                <PrivateRoute
+                  isAllowed={isTermsAccepted}
+                  redirectTo={`/${Routes.ONBOARDING}`}
+                  path={`/${Routes.SERVICE_DETAILS}/org/:orgId/service/:serviceId`}
                   {...this.props}
                   component={withInAppWrapper(ServiceDetails)}
                 />
                 <PrivateRoute
+                  isAllowed={isLoggedIn && isTermsAccepted}
+                  redirectTo={isLoggedIn ? `/${Routes.ONBOARDING}` : `/${Routes.LOGIN}`}
                   path={`/${Routes.USER_PROFILE}`}
                   {...this.props}
                   component={withInAppWrapper(UserProfile)}
                 />
-                <Route path="/" exact {...this.props} component={withInAppWrapper(AiMarketplace)} />
+                <PrivateRoute
+                  isAllowed={isTermsAccepted}
+                  redirectTo={`/${Routes.ONBOARDING}`}
+                  path="/"
+                  exact
+                  {...this.props}
+                  component={withInAppWrapper(AiMarketplace)}
+                />
+                <Route path={`/${Routes.GET_STARTED}`} component={withInAppWrapper(GetStarted)} />
                 <Route component={PageNotFound} />
               </Switch>
             </Suspense>
@@ -92,12 +114,14 @@ class App extends Component {
 
 const mapStateToProps = state => ({
   isLoggedIn: state.userReducer.login.isLoggedIn,
+  isTermsAccepted: state.userReducer.isTermsAccepted,
+  wallet: state.userReducer.wallet,
   isInitialized: state.userReducer.isInitialized,
   hamburgerMenu: state.stylesReducer.hamburgerMenu,
 });
 
 const mapDispatchToProps = dispatch => ({
-  setUserDetails: () => dispatch(userActions.setUserDetails),
+  fetchUserDetails: () => dispatch(userActions.fetchUserDetails),
 });
 
 export default connect(

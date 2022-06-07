@@ -36,8 +36,8 @@ const MobileHeader = ({ classes, data, isLoggedIn, hamburgerMenu, updateHamburge
               <NavItem key={tab.title} title={tab.title} link={tab.link} active={tab.active} />
             ))}
             {data.dropdowns.map(dropdown => (
-              <div className={classes.subMenues}>
-                <Fragment key={dropdown.label}>
+              <div key={dropdown.label} className={classes.subMenues}>
+                <Fragment>
                   <NavItem title={dropdown.label} subHeader />
                   {dropdown.list.map(item => (
                     <NavItem key={item.label} title={item.label} link={dropdown.link} subListItem />
@@ -46,7 +46,7 @@ const MobileHeader = ({ classes, data, isLoggedIn, hamburgerMenu, updateHamburge
               </div>
             ))}
           </ul>
-          <div className={classes.mobileActionBtns}>
+          <div className={`${classes.mobileActionBtns} ${isLoggedIn ? classes.loggedInState : ""}`}>
             <HeaderActions isLoggedIn={isLoggedIn} />
           </div>
         </nav>

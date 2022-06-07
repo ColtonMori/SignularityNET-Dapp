@@ -9,7 +9,7 @@ export const useStyles = makeStyles(theme => ({
     color: theme.palette.text.white,
     textTransform: "uppercase",
     fontFamily: theme.typography.primary.main,
-    fontWeight: theme.typography.fontweight,
+    fontWeight: 400,
     letterSpacing: "1.25px",
     lineHeight: "16px",
     "&:disabled": {
@@ -38,6 +38,7 @@ export const useStyles = makeStyles(theme => ({
     color: theme.palette.text.primary,
     "&:disabled": {
       color: "#ccc !important",
+      backgroundColor: "transparent",
     },
     "&:hover": {
       backgroundColor: "rgba(64,134,255,0.1)",
@@ -46,6 +47,15 @@ export const useStyles = makeStyles(theme => ({
   },
   red: {
     color: theme.palette.text.redBtnText,
+    "&:hover": {
+      backgroundColor: theme.palette.text.redBtnText,
+      color: theme.palette.text.white,
+    },
+  },
+  redBg: {
+    padding: "13px 38px 11px",
+    color: theme.palette.text.white,
+    backgroundColor: theme.palette.text.redBtnBg,
     "&:hover": {
       backgroundColor: theme.palette.text.redBtnText,
       color: theme.palette.text.white,

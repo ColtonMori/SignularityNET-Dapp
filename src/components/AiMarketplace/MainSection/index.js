@@ -7,7 +7,7 @@ import Filter from "./Filter";
 import ServiceCollection from "./ServiceCollection";
 import { useStyles } from "./styles";
 import { serviceActions } from "../../../Redux/actionCreators";
-import { filterAttributes } from "../../../utility/constants/Pagination";
+import { filterAttributes, generateFilterObject } from "../../../utility/constants/Pagination";
 
 class MainSection extends Component {
   state = {
@@ -17,9 +17,7 @@ class MainSection extends Component {
   componentDidMount = () => {
     const { fetchFilterData } = this.props;
     this.handleFetchService(this.props.pagination);
-    filterAttributes.map(attribute => {
-      fetchFilterData(attribute);
-    });
+    filterAttributes.map(attribute => fetchFilterData(attribute));
   };
 
   handlePaginationChange = async pagination => {
@@ -28,7 +26,15 @@ class MainSection extends Component {
   };
 
   handleFetchService = pagination => {
-    this.props.fetchService(pagination);
+    const { currentFilter, fetchService } = this.props;
+    let filterObj = [];
+    for (let i in currentFilter) {
+      if (currentFilter[i].length > 0) {
+        filterObj = generateFilterObject(currentFilter);
+        break;
+      }
+    }
+    fetchService(pagination, filterObj);
   };
 
   toggleView = () => {
@@ -36,7 +42,7 @@ class MainSection extends Component {
   };
 
   render() {
-    const { classes, services, pagination } = this.props;
+    const { classes, services, pagination, currentFilter } = this.props;
     const { listView } = this.state;
     return (
       <Grid container spacing={24} className={classes.mainSection}>
@@ -53,10 +59,12 @@ class MainSection extends Component {
               handleChange: this.handlePaginationChange,
             }}
             toolbarProps={{
-              listView: listView,
+              listView,
               total_count: pagination.total_count,
               handleSearchChange: this.handlePaginationChange,
               toggleView: this.toggleView,
+              currentPagination: pagination,
+              currentFilter,
             }}
           />
         </Grid>
@@ -69,11 +77,12 @@ const mapStateToProps = state => ({
   services: state.serviceReducer.services,
   pagination: state.serviceReducer.pagination,
   isLoggedIn: state.userReducer.login.isLoggedIn,
+  currentFilter: state.serviceReducer.activeFilterItem,
 });
 
 const mapDispatchToProps = dispatch => ({
   updatePagination: pagination => dispatch(serviceActions.updatePagination(pagination)),
-  fetchService: pagination => dispatch(serviceActions.fetchService(pagination)),
+  fetchService: (pagination, filterObj) => dispatch(serviceActions.fetchService(pagination, filterObj)),
   fetchFilterData: attribute => dispatch(serviceActions.fetchFilterData(attribute)),
 });
 

@@ -8,6 +8,13 @@ export const useStyles = theme => ({
     backgroundColor: theme.palette.text.white,
     boxShadow: "0 1px 1px 0 rgba(0,0,0,0.07), 0 2px 1px -1px rgba(0,0,0,0.07), 0 1px 3px 0 rgba(0,0,0,0.1)",
     zIndex: 1,
+    "@media(max-width: 769px)": {
+      width: "100%",
+      height: "100vh",
+      top: 0,
+      right: 0,
+      left: 0,
+    },
   },
   UserProfilePopUpHeader: {
     padding: "15px 25px",
@@ -69,10 +76,12 @@ export const useStyles = theme => ({
         marginRight: 18,
         color: theme.palette.text.lightShadedGray,
         fontSize: 19,
+        display: "none",
       },
       "&:last-of-type": {
-        color: theme.palette.text.white,
+        color: theme.palette.text.lightShadedGray,
         fontSize: 35,
+        "&:hover": { color: theme.palette.text.white },
       },
     },
   },

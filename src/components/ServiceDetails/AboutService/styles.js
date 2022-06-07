@@ -10,6 +10,7 @@ export const useStyles = theme => ({
       margin: 0,
       color: theme.palette.text.darkShadedGray,
       fontSize: 20,
+      fontWeight: 400,
     },
   },
   leftSideSection: { paddingRight: 25 },
@@ -23,7 +24,6 @@ export const useStyles = theme => ({
       margin: 0,
       fontSize: 14,
       color: theme.palette.text.mediumShadeGray,
-      fontFamily: theme.typography.secondary.main,
       letterSpacing: "0.25px",
       lineHeight: "20px",
     },
@@ -43,7 +43,6 @@ export const useStyles = theme => ({
       "& li": {
         display: "flex",
         color: theme.palette.text.mediumShadeGray,
-        fontFamily: theme.typography.secondary.main,
         fontSize: 14,
         lineHeight: "24px",
         letterSpacing: "0.25px",
@@ -87,12 +86,16 @@ export const useStyles = theme => ({
   },
   backToLink: {
     marginTop: 30,
-    color: theme.palette.text.primary,
+    "& span": {
+      color: theme.palette.text.primary,
+      verticalAlign: "bottom",
+    },
     "& a": {
-      marginLeft: 15,
+      marginLeft: 11,
       color: theme.palette.text.primary,
       textDecoration: "none",
       fontSize: 16,
+      "&:hover": { fontWeight: 600 },
     },
   },
   creatorDetailsContainer: {
@@ -111,8 +114,9 @@ export const useStyles = theme => ({
     "& h4": {
       margin: 0,
       color: theme.palette.text.primary,
+      fontWeight: 600,
       fontSize: 18,
-      letterSpacing: "0.23px",
+      letterSpacing: "0.25px",
       lineHeight: "24px",
     },
     "& span": {
@@ -153,18 +157,17 @@ export const useStyles = theme => ({
         width: 150,
         margin: 0,
         color: theme.palette.text.darkShadedGray,
+        fontWeight: 400,
         fontSize: 16,
         lineHeight: "22px",
       },
-      "& div": {
-        marginLeft: 20,
-      },
+      "& div": { marginLeft: 20 },
       "& a": {
         display: "block",
         color: theme.palette.text.primary,
         fontSize: 14,
-        fontFamily: theme.typography.secondary.main,
-        fontWeight: 600,
+        fontWeight: 400,
+        letterSpacing: "0.25px",
         textDecoration: "none",
       },
       "& p": {
@@ -176,13 +179,9 @@ export const useStyles = theme => ({
     },
   },
   contributors: {
-    "& p": {
-      marginLeft: "30px !important",
-    },
+    "& p": { marginLeft: "30px !important" },
   },
   demoToggler: {
-    "& a": {
-      textDecoration: "none !important",
-    },
+    "& a": { textDecoration: "none !important" },
   },
 });

@@ -32,14 +32,14 @@ const tabs = [
   {
     title: "AI Marketplace",
     active: true,
-    link: Routes.AI_MARKETPLACE,
+    link: `/${Routes.AI_MARKETPLACE}`,
     openInNewTab: false,
   },
   {
     title: "Get Started",
     active: false,
-    link: "https://blog.singularitynet.io/a-beginners-guide-to-the-singularitynet-beta-74d523902958",
-    openInNewTab: true,
+    link: `/${Routes.GET_STARTED}`,
+    openInNewTab: false,
   },
 ];
 

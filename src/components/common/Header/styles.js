@@ -2,16 +2,16 @@ import { makeStyles } from "@material-ui/styles";
 
 export const useStyles = makeStyles(theme => ({
   header: {
-    alignItems: "center",
-    display: "flex",
-    backgroundColor: theme.palette.text.purple,
     padding: "12px 65px 4px 60px",
+    display: "flex",
+    alignItems: "center",
+    position: "fixed",
+    right: 0,
+    left: 0,
+    zIndex: 1,
+    backgroundColor: theme.palette.text.purple,
+    boxShadow: "0 2px 6px 0 rgba(0,0,0,0.3)",
     "@media (max-width:1280px)": { padding: "13px 10px 3px 10px" },
-    "@media (max-width:768px)": { padding: "15px 22" },
-    "@media (max-width:480px)": {
-      flexDirection: "column",
-      alignItems: "flex-start",
-    },
   },
   logoSection: {
     width: "30%",
@@ -21,16 +21,19 @@ export const useStyles = makeStyles(theme => ({
   },
   h1: {
     margin: 0,
+    "& a": { textDecoration: "none" },
+    "& span": {
+      "&:before": { fontSize: 45 },
+    },
   },
   logoAnchor: {
     display: "inline-block",
-    "& img": {
-      width: 172,
-    },
+    "& img": { width: 172 },
   },
   logoIcon: { width: "100%" },
   navigationSection: {
     width: "58%",
+    marginBottom: 10,
     "@media (max-width:1024px)": { display: "none" },
   },
   navUl: {
@@ -50,54 +53,26 @@ export const useStyles = makeStyles(theme => ({
     fontSize: 16,
     color: theme.palette.text.lightShadedGray,
     lineHeight: "22px",
+    "&:hover": { color: theme.palette.text.white },
   },
   navLinksDropDown: {
     listStyle: "none",
-    "& > div": { width: 70 },
-    "& .MuiFormLabel-root.Mui-focused": {
-      color: theme.palette.text.lightShadedGray,
-    },
-    "& label": {
-      fontSize: 16,
-      top: "-20px",
-      color: theme.palette.text.lightShadedGray,
-      "& + div": {
-        margin: 0,
-        "& svg": {
-          top: "calc(50% - 19px)",
-          right: "-35px",
-          color: theme.palette.text.lightShadedGray,
-          fontSize: 30,
-        },
-        "&::after": {
-          border: "1px solid #fff",
-          bottom: "-8px",
-        },
-      },
-      "& option": {
-        color: theme.palette.text.white,
-      },
-    },
+    "& select": { color: theme.palette.text.lightShadedGray },
+    "& svg": { color: theme.palette.text.lightShadedGray },
   },
   activeTab: {
-    paddingBottom: 12,
-    fontWeight: theme.typography.fontweight,
+    paddingBottom: 4,
     borderBottomWidth: "2px",
     borderBottomStyle: "solid",
     borderBottomColor: theme.palette.text.white,
     color: theme.palette.text.white,
+    fontWeight: 600,
   },
   loginBtnsSection: {
     width: "30%",
     marginBottom: 6,
     "@media (max-width:1024px)": { width: "35%" },
     "@media (max-width: 587px)": { width: "50%" },
-    "@media (max-width:480px)": {
-      width: "100%",
-      marginTop: 10,
-      display: "flex",
-      alignSelf: "flex-end",
-    },
   },
   loginBtnsUl: {
     margin: 0,
@@ -131,9 +106,10 @@ export const useStyles = makeStyles(theme => ({
     textDecoration: "none",
     fontSize: 16,
     color: theme.palette.text.white,
+    cursor: "pointer",
   },
   signupBtnText: {
-    fontWeight: theme.typography.fontweight,
+    fontWeight: 600,
     letterSpacing: 1.79,
     lineHeight: "16px",
   },

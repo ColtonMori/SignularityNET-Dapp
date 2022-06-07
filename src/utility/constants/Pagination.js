@@ -1,6 +1,6 @@
-export const filterParamters = { display_name: "dn", org_id: "org", tags: "tg", all: "all" };
+export const filterParamters = { org_id: "org" };
 
-export const filterAttributes = ["display_name", "organization", "tags"];
+export const filterAttributes = ["org_id"];
 
 export const defaultFilterData = {
   tags: {
@@ -11,20 +11,22 @@ export const defaultFilterData = {
 };
 
 export const defaultActiveFilterItem = {
-  display_name: [],
-  organization: [],
-  tags: [],
+  org_id: [],
+};
+
+export const filterTitles = {
+  tags: "Tags",
+  display_name: "Display Name",
+  org_id: "Organization",
 };
 
 export const generateFilterObject = filterData => {
   const filterObject = [];
   const filter = { filter: [] };
-  Object.entries(filterData).map(([attribute, values]) => {
+  filter.filter = Object.entries(filterData).map(([attribute, values]) => {
     const filterCondition = { filter_condition: { attr: attribute, operator: "IN", value: [] } };
-    values.map(value => {
-      filterCondition.filter_condition.value.push(value);
-    });
-    filter.filter.push(filterCondition);
+    filterCondition.filter_condition.value = values.map(value => value);
+    return filterCondition;
   });
   filterObject.push(filter);
   return filterObject;

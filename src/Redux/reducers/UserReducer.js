@@ -1,4 +1,5 @@
 import { userActions } from "../actionCreators";
+import { walletTypes } from "../actionCreators/UserActions";
 
 const InitialUserDetails = {
   login: {
@@ -8,13 +9,18 @@ const InitialUserDetails = {
   },
   isInitialized: false,
   isEmailVerified: false,
-  isWalletAssigned: false,
+  wallet: {},
   email: "",
-  username: "",
+  nickname: "",
+  emailAlerts: false,
+  isTermsAccepted: true,
 };
 
 const userReducer = (state = InitialUserDetails, action) => {
   switch (action.type) {
+    case userActions.APP_INITIALIZATION_SUCCESS: {
+      return { ...state, ...action.payload };
+    }
     case userActions.SET_USER_DETAILS: {
       return {
         ...state,
@@ -28,6 +34,7 @@ const userReducer = (state = InitialUserDetails, action) => {
     case userActions.LOGIN_SUCCESS: {
       return {
         ...state,
+        ...action.payload,
         login: {
           ...state.login,
           error: undefined,
@@ -64,17 +71,27 @@ const userReducer = (state = InitialUserDetails, action) => {
           ...state.login,
           ...action.payload.login,
         },
+        wallet: { type: walletTypes.SNET },
       };
     }
-
-    case userActions.CHECK_WALLET_STATUS: {
-      return { ...state, isWalletAssigned: action.payload.isWalletAssigned };
+    case userActions.UPDATE_WALLET: {
+      return { ...state, wallet: action.payload };
     }
-
-    case userActions.UPDATE_USERNAME: {
+    case userActions.UPDATE_NICKNAME: {
       return { ...state, ...action.payload };
     }
-
+    case userActions.UPDATE_EMAIL: {
+      return { ...state, ...action.payload };
+    }
+    case userActions.UPDATE_EMAIL_VERIFIED: {
+      return { ...state, isEmailVerified: action.payload.isEmailVerified };
+    }
+    case userActions.UPDATE_EMAIL_ALERTS_SUBSCRIPTION: {
+      return { ...state, emailAlerts: action.payload };
+    }
+    case userActions.UPDATE_IS_TERMS_ACCEPTED: {
+      return { ...state, isTermsAccepted: action.payload };
+    }
     default: {
       return state;
     }
