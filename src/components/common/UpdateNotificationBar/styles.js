@@ -23,6 +23,8 @@ export const useStyles = theme => ({
       },
       "& svg": { fontSize: 12 },
       "@media(max-width:764px)": { padding: "10px 0" },
+      },
+      "& svg": { fontSize: 12 },
     },
   },
   closeIcon: {

@@ -23,6 +23,16 @@ export const useStyles = makeStyles(theme => ({
     alignItems: "center",
     "@media (max-width:1280px)": { padding: "13px 10px 6px 10px" },
   },
+  updateNotificationBar: {
+    width: "100%",
+  },
+  mainHeader: {
+    boxSizing: "border-box",
+    width: "100%",
+    padding: "13px 65px 6px 60px",
+    display: "flex",
+    alignItems: "center",
+  },
   logoSection: {
     width: "30%",
     display: "flex",
