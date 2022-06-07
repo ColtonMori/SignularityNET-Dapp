@@ -6,6 +6,7 @@ import NavBar from "./NavBar";
 import HeaderActions from "./HeaderActions";
 import Title from "./Title";
 import MobileHeader from "./MobileHeader";
+import UpdateNotificationBar from "../../common/UpdateNotificationBar";
 import UpdateNotificationBar from "../UpdateNotificationBar";
 import { NavData } from "../../../utility/constants/Header";
 
